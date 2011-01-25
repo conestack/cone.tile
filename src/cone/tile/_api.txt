@@ -1,0 +1,78 @@
+Imports.
+::
+
+    >>> from cone.tile import Tile
+    >>> from cone.tile import TileRenderer
+    >>> from cone.tile import render_tile
+    >>> from cone.tile import registerTile
+    >>> from cone.tile import tile
+    
+We need some dummies as model and request.
+::
+
+    >>> from repoze.bfg.threadlocal import get_current_registry
+    >>> class Model(object): pass
+    >>> model = Model()
+    >>> from repoze.bfg.request import Request
+    >>> environ = {
+    ...     'PATH_INFO':'/',
+    ...     'QUERY_STRING':''
+    ... }    
+    >>> request = Request(environ=environ)
+    >>> request.registry = get_current_registry()
+    
+The pure Tile itself. Normally you do not create this directly, this is done
+due registration, see below.
+::
+
+    >>> mytile = Tile('cone.tile:testdata/tile1.pt', 'render', 'foo')
+    >>> mytile(model,  request)
+    u'<span>Tile One</span>'
+
+Register a tile using the prior template testtemplate. When no object is given,
+the default tile is instanciated as above. ``_level=1`` is needed for the 
+doctest only to reduce the module level.
+::
+
+    >>> registerTile('tileone', 'testdata/tile1.pt', _level=1)
+
+Render the already registered tile - first how it works in templates.
+::
+
+    >>> tilerenderer = TileRenderer(model, request)
+    >>> tilerenderer('tileone')
+    u'<span>Tile One</span>'
+    
+For simplification in Python code the same can be achieved by::
+
+    >>> render_tile(model, request, 'tileone')
+    u'<span>Tile One</span>'
+
+Now the decorator (ignore the ``_level``)
+::
+
+    >>> @tile('tiletwo', 'testdata/tile2.pt', _level=1)
+    ... class Tile2(Tile):
+    ...     data = u'custom'
+    >>> render_tile(model, request, 'tiletwo')
+    u'<span>Tile Two: <b><span>Tile One</span></b></span>'
+
+You can define an attribute which is responsible to render the tile instead of
+defining a template. By default ``render`` is taken. With the keyword argument 
+``attribute`` you can point to a different attribute.
+::
+    
+    >>> @tile('attrtile')
+    ... class Tile2(Tile):
+    ...     def render(self):
+    ...         return u'<h1>Rendered via attribute call</h1>'
+    >>> render_tile(model, request, 'attrtile')
+    u'<h1>Rendered via attribute call</h1>'
+    
+    >>> @tile('attrtile', attribute='foobar')
+    ... class Tile2(Tile):
+    ...     def foobar(self):
+    ...         return u'<h1>Rendered via attribute foobar call</h1>'
+    >>> render_tile(model, request, 'attrtile')
+    u'<h1>Rendered via attribute foobar call</h1>'
+    
