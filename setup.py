@@ -4,8 +4,8 @@ import sys, os
 version = '1.1'
 shortdesc = 'Handle web application parts as tiles.'
 longdesc = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
-longdesc = open(os.path.join(os.path.dirname(__file__), 'src', 'bda', 'bfg',
-                             'tile', '_api.txt')).read()
+longdesc = open(os.path.join(os.path.dirname(__file__), 'src', 'cone', 'tile',
+                                                        '_api.txt')).read()
 longdesc += open(os.path.join(os.path.dirname(__file__), 'LICENSE.rst')).read()
 
 setup(name='cone.tile',
