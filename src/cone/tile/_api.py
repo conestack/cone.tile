@@ -6,23 +6,25 @@ from zope.interface import (
     Interface, 
     Attribute, 
     implements,
-    directlyProvides,
 )
 from zope.component import ComponentLookupError
-from repoze.bfg.interfaces import (
+from pyramid.interfaces import (
     IRequest,
     IResponseFactory,
     IAuthenticationPolicy,
     IAuthorizationPolicy,
     IDebugLogger,
 )
-from repoze.bfg.settings import get_settings
-from repoze.bfg.configuration import decorate_view
-from repoze.bfg.exceptions import Forbidden
-from repoze.bfg.threadlocal import get_current_registry
-from repoze.bfg.path import caller_package
-from repoze.bfg.renderers import template_renderer_factory
-from repoze.bfg.chameleon_zpt import ZPTTemplateRenderer
+from pyramid.settings import get_settings
+from pyramid.config import preserve_view_attrs
+from pyramid.exceptions import Forbidden
+from pyramid.threadlocal import get_current_registry
+from pyramid.path import caller_package
+from pyramid.renderers import (
+    RendererHelper,
+    template_renderer_factory,
+)
+from pyramid.chameleon_zpt import ZPTTemplateRenderer
 
 class ITile(Interface):
     """Renders some HTML snippet.
@@ -62,13 +64,15 @@ def render_template(path, **kw):
         return u''
     if not (':' in path or os.path.isabs(path)): 
         raise ValueError, 'Relative path not supported: %s' % path
-    renderer = template_renderer_factory(path, ZPTTemplateRenderer)
+    info = RendererHelper(name=path, registry=kw['request'].registry)
+    renderer = template_renderer_factory(info, ZPTTemplateRenderer)
     return renderer(kw, {})    
     
 def render_template_to_response(path, **kw):
     kw = _update_kw(**kw)
     kw['request'].environ['redirect'] = None
-    renderer = template_renderer_factory(path, ZPTTemplateRenderer)
+    info = RendererHelper(name=path, registry=kw['request'].registry)
+    renderer = template_renderer_factory(info, ZPTTemplateRenderer)
     result = renderer(kw, {})
     if _redirect(kw):
         return HTTPFound(location=kw['request'].environ['redirect'])
@@ -181,7 +185,7 @@ def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
         return authz_policy.permits(context, principals, permission)
     _secured_tile.__permitted__ = _permitted
     wrapped_tile = _secured_tile
-    decorate_view(wrapped_tile, tile)
+    preserve_view_attrs(tile, wrapped_tile)
     return wrapped_tile
 
 # Registration
@@ -203,7 +207,7 @@ def registerTile(name, path=None, attribute='render',
         ``render``.
         
     ``interface`` 
-        Interface or Class of the bfg model the tile is registered for.
+        Interface or Class of the pyramid model the tile is registered for.
         
     ``class_``
         Class to be used to render the tile. usally ``cone.tile.Tile`` or a

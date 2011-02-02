@@ -31,7 +31,7 @@ setup(name='cone.tile',
       zip_safe=False,
       install_requires=[
           'setuptools',
-          'repoze.bfg',
+          'pyramid',
       ],
       # XXX: why should this be set here?
       #dependency_links = [
