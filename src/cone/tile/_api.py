@@ -15,7 +15,6 @@ from pyramid.interfaces import (
     IAuthorizationPolicy,
     IDebugLogger,
 )
-from pyramid.settings import get_settings
 from pyramid.config import preserve_view_attrs
 from pyramid.exceptions import Forbidden
 from pyramid.threadlocal import get_current_registry
@@ -174,7 +173,7 @@ def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
                       'Unauthorized: tile %s failed permission check' % tile)
         if strict:
             raise Forbidden(msg)
-        settings = get_settings()
+        settings = request.registry.settings
         if settings.get('debug_authorization', False):
             logger = IDebugLogger()
             logger.debug(msg)
