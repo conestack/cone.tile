@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '1.1'
+version = '1.2'
 shortdesc = 'Handle web application parts as tiles.'
 longdesc = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
 longdesc = open(os.path.join(os.path.dirname(__file__), 'src', 'cone', 'tile',
@@ -13,7 +13,6 @@ setup(name='cone.tile',
       description=shortdesc,
       long_description=longdesc,
       classifiers=[
-            'Development Status :: 3 - Alpha',
             'Environment :: Web Environment',
             'Operating System :: OS Independent',
             'Programming Language :: Python', 
@@ -33,10 +32,6 @@ setup(name='cone.tile',
           'setuptools',
           'pyramid',
       ],
-      # XXX: why should this be set here?
-      #dependency_links = [
-      #    "http://dist.repoze.org/bfg/1.3/",
-      #],
       extras_require = dict(
           test=['interlude']
       ),
