@@ -25,6 +25,7 @@ from pyramid.renderers import (
 )
 from pyramid.chameleon_zpt import ZPTTemplateRenderer
 
+
 class ITile(Interface):
     """Renders some HTML snippet.
     """
@@ -45,18 +46,21 @@ class ITile(Interface):
         
         I.e. fetch data to display ... 
         """
-    
+
+
 def _update_kw(**kw):
     if not ('request' in kw and 'model' in kw):
         raise ValueError, "Expected kwargs missing: model, request."
     kw.update({'tile': TileRenderer(kw['model'], kw['request'])})    
     return kw
 
+
 def _redirect(kw):
     if kw['request'].environ.get('redirect'):
         return True
     return False
-    
+
+
 def render_template(path, **kw):
     kw = _update_kw(**kw)
     if _redirect(kw):
@@ -66,7 +70,8 @@ def render_template(path, **kw):
     info = RendererHelper(name=path, registry=kw['request'].registry)
     renderer = template_renderer_factory(info, ZPTTemplateRenderer)
     return renderer(kw, {})    
-    
+
+
 def render_template_to_response(path, **kw):
     kw = _update_kw(**kw)
     kw['request'].environ['redirect'] = None
@@ -79,12 +84,14 @@ def render_template_to_response(path, **kw):
                                                            default=Response)
     return response_factory(result)
 
+
 def render_to_response(request, result):
     if _redirect(kw={'request': request}):
         return HTTPFound(location=request.environ['redirect'])
     response_factory = request.registry.queryUtility(IResponseFactory,
                                                      default=Response)
     return response_factory(result)
+
 
 def render_tile(model, request, name):
     """renders a tile. Intended usage is in application code.
@@ -99,11 +106,13 @@ def render_tile(model, request, name):
         name of the requested tile
     """
     try:
-        tile = request.registry.getMultiAdapter((model, request), ITile, name=name)
+        tile = request.registry.getMultiAdapter((model, request),
+                                                ITile, name=name)
     except ComponentLookupError, e:
         return u"Tile with name '%s' not found:<br /><pre>%s</pre>" % \
                (name, cgi.escape(str(e)))
     return tile
+
 
 class TileRenderer(object):
     """Renders a tile. Intended usage is as instance in template code."""
@@ -113,7 +122,8 @@ class TileRenderer(object):
     
     def __call__(self, name):
         return render_tile(self.model, self.request, name)
-    
+
+
 class Tile(object):
     implements(ITile)
     
@@ -125,12 +135,12 @@ class Tile(object):
     def __call__(self, model, request):
         self.model = model
         self.request = request
-        self.prepare() # TODO: discuss if needed. i think yes (jens)
+        self.prepare()
         if not self.show:
             return u''
         if self.path:
             return render_template(self.path, request=request,
-                                       model=model, context=self)
+                                   model=model, context=self)
         renderer = getattr(self, self.attribute)
         result = renderer()
         return result
@@ -146,8 +156,9 @@ class Tile(object):
         return u''
     
     def redirect(self, url):
-        # why do we need a redirect in a tile!?
-        # a.: a tile is not always rendered to the response, form tiles i.e.
+        # why do we need a redirect in a tile?
+        #
+        # a tile is not always rendered to the response, form tiles i.e.
         # might perform redirection.
         self.request.environ['redirect'] = url
     
@@ -155,7 +166,8 @@ class Tile(object):
     def nodeurl(self):
         relpath = [p for p in self.model.path if p is not None]
         return '/'.join([self.request.application_url] + relpath)
-    
+
+
 def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
     """wraps tile and does security checks.
     """
@@ -186,6 +198,7 @@ def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
     wrapped_tile = _secured_tile
     preserve_view_attrs(tile, wrapped_tile)
     return wrapped_tile
+
 
 # Registration
 def registerTile(name, path=None, attribute='render',
@@ -236,7 +249,8 @@ def registerTile(name, path=None, attribute='render',
                             strict)
     registry.registerAdapter(tile, [interface, IRequest], ITile, name, 
                              event=False)
-    
+
+
 class tile(object):
     """Decorator to register classes and functions as tiles.
     """
