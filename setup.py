@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '1.2'
+version = '0.9a1'
 shortdesc = 'Handle web application parts as tiles.'
 longdesc = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
 longdesc = open(os.path.join(os.path.dirname(__file__), 'src', 'cone', 'tile',
@@ -21,7 +21,7 @@ setup(name='cone.tile',
       keywords='',
       author='BlueDynamics Alliance',
       author_email='dev@bluedynamics.com',
-      url=u'https://svn.bluedynamics.eu/svn/module/cone.tile/',
+      url=u'https://github.com/bluedynamics/cone.tile',
       license='GNU General Public Licence',
       packages=find_packages('src'),
       package_dir = {'': 'src'},
