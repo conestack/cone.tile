@@ -79,7 +79,10 @@ def render_template_to_response(path, **kw):
     renderer = template_renderer_factory(info, ZPTTemplateRenderer)
     result = renderer(kw, {})
     if _redirect(kw):
-        return HTTPFound(location=kw['request'].environ['redirect'])
+        redirect = kw['request'].environ['redirect']
+        if isinstance(redirect, HTTPFound):
+            return redirect
+        return HTTPFound(location=redirect)
     response_factory = kw['request'].registry.queryUtility(IResponseFactory,
                                                            default=Response)
     return response_factory(result)
@@ -87,7 +90,10 @@ def render_template_to_response(path, **kw):
 
 def render_to_response(request, result):
     if _redirect(kw={'request': request}):
-        return HTTPFound(location=request.environ['redirect'])
+        redirect = request.environ['redirect']
+        if isinstance(redirect, HTTPFound):
+            return redirect
+        return HTTPFound(location=redirect)
     response_factory = request.registry.queryUtility(IResponseFactory,
                                                      default=Response)
     return response_factory(result)
@@ -155,12 +161,16 @@ class Tile(object):
     def render(self):
         return u''
     
-    def redirect(self, url):
-        # why do we need a redirect in a tile?
-        #
-        # a tile is not always rendered to the response, form tiles i.e.
-        # might perform redirection.
-        self.request.environ['redirect'] = url
+    def redirect(self, redirect):
+        """Given param is either a string containing a URL or a HTTPFound
+        instance.
+        
+        Why do we need a redirect in a tile?
+        
+        A tile is not always rendered to the response, form tiles i.e.
+        might perform redirection.
+        """
+        self.request.environ['redirect'] = redirect
     
     @property
     def nodeurl(self):
