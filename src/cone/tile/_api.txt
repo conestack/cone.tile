@@ -247,8 +247,8 @@ Define ACL for model::
 
     >>> __acl__ = [
     ...    (Allow, 'system.Authenticated', ['view']),
-    ...    (Allow, 'group:editor', ['edit']),
-    ...    (Allow, 'role:manager', ['delete']),
+    ...    (Allow, 'role:editor', ['view', 'edit']),
+    ...    (Allow, 'role:manager', ['view', 'edit', 'delete']),
     ...    (Allow, Everyone, ['login']),
     ...    (Deny, Everyone, ALL_PERMISSIONS),
     ... ]
@@ -259,9 +259,9 @@ Authentication policy::
 
     >>> def groups_callback(name, request):
     ...     if name == 'admin_user':
-    ...         return ['role:manager', 'group:editor']
+    ...         return ['role:manager']
     ...     if name == 'editor_user':
-    ...         return ['group:editor']
+    ...         return ['role:editor']
     ...     return []
     
     >>> authn = CallbackAuthenticationPolicy()
