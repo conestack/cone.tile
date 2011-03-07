@@ -352,3 +352,14 @@ Check tile securing::
     <InterfaceClass cone.tile._api.ITile>, 'inexistent')", 
     'Unauthorized: tile <ProtectedUnstrict object at ...> failed 
     permission check']
+    
+Cleanup::
+
+    >>> registry.unregisterUtility(logger, IDebugLogger)
+    True
+    
+    >>> registry.unregisterUtility(authn, IAuthenticationPolicy)
+    True
+    
+    >>> registry.unregisterUtility(authz, IAuthorizationPolicy)
+    True
