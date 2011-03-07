@@ -123,8 +123,11 @@ def render_tile(model, request, name):
         tile = request.registry.getMultiAdapter((model, request),
                                                 ITile, name=name)
     except ComponentLookupError, e:
-        # XXX: logging
-        # XXX: debug mode raising error
+        settings = request.registry.settings
+        if settings.get('debug_authorization', False):
+            msg = u"Error in rendering_tile: %s" % str(e)
+            logger = request.registry.getUtility(IDebugLogger)
+            logger.debug(msg)
         return u"Tile with name '%s' not found:<br /><pre>%s</pre>" % \
                (name, cgi.escape(str(e)))
     return tile

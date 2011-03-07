@@ -2,9 +2,23 @@ Prepare Tests::
 
     >>> from pyramid import testing
     >>> request = testing.DummyRequest()
+    >>> registry = request.registry
+    >>> request.registry.settings = {'debug_authorization': True}
     >>> class Model(testing.DummyResource):
     ...     path = [None]
     >>> model = Model()
+    
+    >>> from pyramid.interfaces import IDebugLogger
+    >>> class DummyLogger(object):
+    ...     def __init__(self):
+    ...         self.messages = []
+    ...     def info(self, msg):
+    ...         self.messages.append(msg)
+    ...     warn = info
+    ...     debug = info
+    
+    >>> logger = DummyLogger()
+    >>> registry.registerUtility(logger, IDebugLogger)
 
     >>> from cone.tile import Tile
     >>> from cone.tile import TileRenderer
@@ -224,7 +238,6 @@ Check tile securing::
     >>> from pyramid.interfaces import IAuthorizationPolicy
     >>> from pyramid.authentication import CallbackAuthenticationPolicy
     >>> from pyramid.authorization import ACLAuthorizationPolicy
-    >>> from pyramid.threadlocal import get_current_registry
     >>> from pyramid.security import Everyone
     >>> from pyramid.security import Allow
     >>> from pyramid.security import Deny
@@ -246,8 +259,6 @@ Check tile securing::
     ...     if name == 'editor_user':
     ...         return ['group:editor']
     ...     return []
-    
-    >>> registry = get_current_registry()
     
     >>> authn = CallbackAuthenticationPolicy()
     >>> authn.unauthenticated_userid = lambda *args: None
@@ -318,30 +329,13 @@ Check tile securing::
     >>> render_tile(model, request, 'protected_login')
     u'permission login'
     
-    >>> from pyramid.interfaces import IDebugLogger
-    >>> class DummyLogger(object):
-    ...     def __init__(self):
-    ...         self.messages = []
-    ...     def info(self, msg):
-    ...         self.messages.append(msg)
-    ...     warn = info
-    ...     debug = info
-    
-    >>> logger = DummyLogger()
-    >>> registry.registerUtility(logger, IDebugLogger)
-    
     >>> @tile('protected_unstrict', permission='delete', strict=False)
     ... class ProtectedUnstrict(Tile):
     ...     def render(self):
     ...         return u'unsctrict'
     >>> authn.unauthenticated_userid = lambda *args: None
-    >>> request.registry.settings = {'debug_authorization': True}
     >>> render_tile(model, request, 'protected_unstrict')
     u''
-    
-    >>> logger.messages
-    ['Unauthorized: tile <ProtectedUnstrict object at ...> failed 
-    permission check']
     
     >>> @tile('raisingtile', permission='login')
     ... class RaisingTile(Tile):
@@ -351,3 +345,10 @@ Check tile securing::
     Traceback (most recent call last):
       ...
     Exception: Tile is not willing to perform
+    
+    >>> logger.messages
+    [u"Error in rendering_tile: ((<__builtin__.Model instance at ...>, 
+    <pyramid.testing.DummyRequest object at ...>), 
+    <InterfaceClass cone.tile._api.ITile>, 'inexistent')", 
+    'Unauthorized: tile <ProtectedUnstrict object at ...> failed 
+    permission check']
