@@ -242,7 +242,9 @@ Check tile securing::
     >>> from pyramid.security import Allow
     >>> from pyramid.security import Deny
     >>> from pyramid.security import ALL_PERMISSIONS
-    
+
+Define ACL for model::
+
     >>> __acl__ = [
     ...    (Allow, 'system.Authenticated', ['view']),
     ...    (Allow, 'group:editor', ['edit']),
@@ -252,7 +254,9 @@ Check tile securing::
     ... ]
     
     >>> model.__acl__ = __acl__
-    
+
+Authentication policy::
+
     >>> def groups_callback(name, request):
     ...     if name == 'admin_user':
     ...         return ['role:manager', 'group:editor']
@@ -261,12 +265,19 @@ Check tile securing::
     ...     return []
     
     >>> authn = CallbackAuthenticationPolicy()
-    >>> authn.unauthenticated_userid = lambda *args: None
     >>> authn.callback = groups_callback
     >>> registry.registerUtility(authn, IAuthenticationPolicy)
+
+Authorization policy::
     
     >>> authz = ACLAuthorizationPolicy()
     >>> registry.registerUtility(authz, IAuthorizationPolicy)
+
+No authenticated user::
+
+    >>> authn.unauthenticated_userid = lambda *args: None
+
+Login permission protected tile can be rendered::
 
     >>> @tile('protected_login', permission='login')
     ... class ProtectedLogin(Tile):
@@ -275,7 +286,9 @@ Check tile securing::
     
     >>> render_tile(model, request, 'protected_login')
     u'permission login'
-    
+
+View permission protected tile rendering fails for anonymous::
+
     >>> @tile('protected_view', permission='view')
     ... class ProtectedView(Tile):
     ...     def render(self):
@@ -286,10 +299,17 @@ Check tile securing::
       ...
     Forbidden: Unauthorized: tile <ProtectedView object at ...> failed 
     permission check
-    
+
+Set authenticated to 'max'::
+
     >>> authn.unauthenticated_userid = lambda *args: 'max'
+
+Authenticated users are allowed to view tiles protected by view permission::
+
     >>> render_tile(model, request, 'protected_view')
     u'permission view'
+
+Edit permission protected tile rendering fails for authenticated::
     
     >>> @tile('protected_edit', permission='edit')
     ... class ProtectedEdit(Tile):
@@ -301,11 +321,18 @@ Check tile securing::
       ...
     Forbidden: Unauthorized: tile <ProtectedEdit object at ...> failed 
     permission check
-    
+
+Set authenticated to 'editor_user'::
+
     >>> authn.unauthenticated_userid = lambda *args: 'editor_user'
+
+Editor is allowed to render edit permission protected tiles::
+
     >>> render_tile(model, request, 'protected_edit')
     u'permission edit'
-    
+
+Delete permission protected tile rendering fails for editor::
+
     >>> @tile('protected_delete', permission='delete')
     ... class ProtectedDelete(Tile):
     ...     def render(self):
@@ -315,8 +342,14 @@ Check tile securing::
       ...
     Forbidden: Unauthorized: tile <ProtectedDelete object at ...> failed 
     permission check
-    
+
+Set User to 'admin_user'::
+
     >>> authn.unauthenticated_userid = lambda *args: 'admin_user'
+
+Admin users are allowed to render delete permission protected tiles and
+others::
+
     >>> render_tile(model, request, 'protected_delete')
     u'permission delete'
     
@@ -328,6 +361,8 @@ Check tile securing::
     
     >>> render_tile(model, request, 'protected_login')
     u'permission login'
+
+If tile is registered non-strict, render_tile returns empty string::
     
     >>> @tile('protected_unstrict', permission='delete', strict=False)
     ... class ProtectedUnstrict(Tile):
@@ -336,7 +371,9 @@ Check tile securing::
     >>> authn.unauthenticated_userid = lambda *args: None
     >>> render_tile(model, request, 'protected_unstrict')
     u''
-    
+
+If an error occours in tile, do not swallow error::
+
     >>> @tile('raisingtile', permission='login')
     ... class RaisingTile(Tile):
     ...     def render(self):
@@ -345,7 +382,9 @@ Check tile securing::
     Traceback (most recent call last):
       ...
     Exception: Tile is not willing to perform
-    
+
+Some messages were logged::
+
     >>> logger.messages
     [u"Error in rendering_tile: ((<__builtin__.Model instance at ...>, 
     <pyramid.testing.DummyRequest object at ...>), 
