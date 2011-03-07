@@ -1,1 +1,0 @@
-<html><body><div tal:content="structure tile('tileone')" /></body></html>

@@ -1,43 +1,47 @@
-Imports.
-::
+Prepare Tests::
+
+    >>> from pyramid import testing
+    
+    >>> from pyramid.security import Everyone
+    >>> from pyramid.security import Allow
+    >>> from pyramid.security import Deny
+    >>> from pyramid.security import ALL_PERMISSIONS
+    
+    >>> from pyramid import testing
+    
+    >>> class Model(testing.DummyResource):
+    ...     path = [None]
+    ...     __acl__ = [
+    ...        (Allow, 'system.Authenticated', ['view']),
+    ...        (Allow, 'group:admins', ['edit']),
+    ...        (Allow, 'role:manager', ['delete']),
+    ...        (Allow, Everyone, ['login']),
+    ...        (Deny, Everyone, ALL_PERMISSIONS),
+    ...     ]
+    
+    >>> model = Model()
+    
+    >>> request = testing.DummyRequest()
 
     >>> from cone.tile import Tile
     >>> from cone.tile import TileRenderer
     >>> from cone.tile import render_tile
     >>> from cone.tile import registerTile
     >>> from cone.tile import tile
-    
-We need some dummies as model and request.
-::
 
-    >>> from pyramid.threadlocal import get_current_registry
-    >>> class Model(object): pass
-    >>> model = Model()
-    >>> from pyramid.request import Request
-    >>> environ = {
-    ...     'PATH_INFO':'/',
-    ...     'QUERY_STRING':''
-    ... }    
-    >>> request = Request(environ=environ)
-    >>> request.registry = get_current_registry()
-    
-The pure Tile itself. Normally you do not create this directly, this is done
-due registration, see below.
-::
+The Tile object. Normally not created directly, this is done due registration, 
+see below::
 
     >>> mytile = Tile('cone.tile:testdata/tile1.pt', 'render', 'foo')
     >>> mytile(model,  request)
     u'<span>Tile One</span>'
 
-Register a tile using the prior template testtemplate. When no object is given,
-the default tile is instanciated as above. ``_level=1`` is needed for the 
-doctest only to reduce the module level.
-::
+Register a tile. When no object is given, the default Tile is instanciated.
+``_level=1`` is needed for the doctest only to reduce the module level::
 
     >>> registerTile('tileone', 'testdata/tile1.pt', _level=1)
 
-Render the already registered tile - first how it works in templates.
-::
+Render registered tile - first how it works in templates::
 
     >>> tilerenderer = TileRenderer(model, request)
     >>> tilerenderer('tileone')
@@ -48,31 +52,208 @@ For simplification in Python code the same can be achieved by::
     >>> render_tile(model, request, 'tileone')
     u'<span>Tile One</span>'
 
-Now the decorator (ignore the ``_level``)
-::
+Render error message if tile ComponentLookupError::
+
+    >>> render_tile(model, request, 'inexistent')
+    u"Tile with name 'inexistent' not found:<br /><pre>((&lt;__builtin__.Model 
+    instance at ...&gt;, &lt;pyramid.testing.DummyRequest object at ...&gt;), 
+    &lt;InterfaceClass cone.tile._api.ITile&gt;, 'inexistent')</pre>"
+
+Now the decorator (ignore the ``_level``)::
 
     >>> @tile('tiletwo', 'testdata/tile2.pt', _level=1)
-    ... class Tile2(Tile):
+    ... class TileTwo(Tile):
     ...     data = u'custom'
+    
     >>> render_tile(model, request, 'tiletwo')
-    u'<span>Tile Two: <b><span>Tile One</span></b></span>'
+    u'<span>Tile Two: <b><span>Tile One</span></b></span>\n<span>custom</span>'
 
-You can define an attribute which is responsible to render the tile instead of
-defining a template. By default ``render`` is taken. With the keyword argument 
-``attribute`` you can point to a different attribute.
-::
+Optional kw arg ``attribute`` can be given which is responsible to render the
+tile instead of defining a template. By default ``render`` is taken::
     
     >>> @tile('attrtile')
-    ... class Tile2(Tile):
+    ... class TileDefaultRenderAttr(Tile):
     ...     def render(self):
     ...         return u'<h1>Rendered via attribute call</h1>'
+    
     >>> render_tile(model, request, 'attrtile')
     u'<h1>Rendered via attribute call</h1>'
     
-    >>> @tile('attrtile', attribute='foobar')
-    ... class Tile2(Tile):
+    >>> @tile('foobarattrtile', attribute='foobar')
+    ... class TileFoobarRenderAttr(Tile):
     ...     def foobar(self):
     ...         return u'<h1>Rendered via attribute foobar call</h1>'
-    >>> render_tile(model, request, 'attrtile')
-    u'<h1>Rendered via attribute foobar call</h1>'
     
+    >>> render_tile(model, request, 'foobarattrtile')
+    u'<h1>Rendered via attribute foobar call</h1>'
+
+Default ``render`` raises NotImplementedError::
+
+    >>> @tile('norender')
+    ... class NotImplementedTile(Tile):
+    ...     pass
+    
+    >>> render_tile(model, request, 'norender')
+    Traceback (most recent call last):
+      ...
+    NotImplementedError: Base Tile does not implement ``render``
+
+Tile check for ``show`` attribute and returns empty string if it evaluates to
+False::
+
+    >>> @tile('notshowtile')
+    ... class TileDefaultRenderAttr(Tile):
+    ...     show = 0
+    
+    >>> render_tile(model, request, 'notshowtile')
+    u''
+
+Tile provides a redirect function which excepts either a string containing
+The URL to redirect to or a HTTPFound instance.
+
+This function sets request.environ['redirect'] with given value. It is
+considered in ``render_template``,  ``render_template_to_response`` and
+``render_to_response``.
+
+    >>> from webob.exc import HTTPFound
+    
+    >>> @tile('redirecttile')
+    ... class RedirectTile(Tile):
+    ...     def render(self):
+    ...         self.redirect(HTTPFound(location='http://example.com'))
+    
+    >>> render_tile(model, request, 'redirecttile')
+    u''
+    
+    >>> request.environ['redirect']
+    <HTTPFound at ... 302 Found>
+    
+    >>> del request.environ['redirect']
+    
+    >>> registerTile('redirecttiletwo', 'testdata/tile3.pt', _level=1)
+    >>> render_tile(model, request, 'redirecttiletwo')
+    u''
+    
+    >>> request.environ['redirect']
+    'http://example.com/foo'
+    
+    >>> del request.environ['redirect']
+
+Test ``render_template``::
+
+    >>> from cone.tile import render_template
+    >>> render_template('')
+    Traceback (most recent call last):
+      ...
+    ValueError: Expected kwargs missing: model, request.
+    
+    >>> render_template('', model='foo')
+    Traceback (most recent call last):
+      ...
+    ValueError: Expected kwargs missing: model, request.
+    
+    >>> render_template('', request='foo')
+    Traceback (most recent call last):
+      ...
+    ValueError: Expected kwargs missing: model, request.
+    
+    >>> render_template('testdata/tile1.pt', model=model, request=request)
+    Traceback (most recent call last):
+      ...
+    ValueError: Relative path not supported: testdata/tile1.pt
+    
+    >>> render_template(
+    ...     'cone.tile:testdata/tile1.pt', model=model, request=request)
+    u'<span>Tile One</span>'
+    
+    >>> request.environ['redirect'] = 'http://example.com/foo'
+    >>> render_template(
+    ...     'cone.tile:testdata/tile1.pt', model=model, request=request)
+    u''
+    
+    >>> del request.environ['redirect']
+
+Test ``render_template_to_response``::
+
+    >>> from cone.tile import render_template_to_response
+    >>> render_template_to_response('')
+    Traceback (most recent call last):
+      ...
+    ValueError: Expected kwargs missing: model, request.
+    
+    >>> render_template_to_response('', model='foo')
+    Traceback (most recent call last):
+      ...
+    ValueError: Expected kwargs missing: model, request.
+    
+    >>> render_template_to_response('', request='foo')
+    Traceback (most recent call last):
+      ...
+    ValueError: Expected kwargs missing: model, request.
+    
+    >>> render_template_to_response(
+    ...     'testdata/tile1.pt', model=model, request=request)
+    Traceback (most recent call last):
+      ...
+    ValueError: Missing template asset: testdata/tile1.pt (...tile1.pt)
+    
+    >>> render_template_to_response(
+    ...     'cone.tile:testdata/tile1.pt', model=model, request=request)
+    <Response at ... 200 OK>
+    
+    >>> render_template_to_response(
+    ...     'cone.tile:testdata/tmpl1.pt', model=model, request=request)
+    <HTTPFound at ... 302 Found>
+    
+    >>> del request.environ['redirect']
+    
+    >>> render_template_to_response(
+    ...     'cone.tile:testdata/tmpl2.pt', model=model, request=request)
+    <HTTPFound at ... 302 Found>
+    
+    >>> del request.environ['redirect']
+
+Test ``render_to_response``::
+
+    >>> from cone.tile import render_to_response
+    >>> render_to_response(request, 'foo')
+    <Response at ... 200 OK>
+    
+    >>> request.environ['redirect'] = 'http://example.com/foo'
+    >>> render_to_response(request, 'foo')
+    <HTTPFound at ... 302 Found>
+    
+    >>> request.environ['redirect'] = HTTPFound(location='http://example.com')
+    >>> render_to_response(request, 'foo')
+    <HTTPFound at ... 302 Found>
+    
+    >>> del request.environ['redirect']
+
+Check ``nodeurl``::
+
+    >>> registerTile('urltile', 'testdata/tile4.pt', _level=1)
+    >>> render_tile(model, request, 'urltile')
+    u'<span>http://example.com</span>\n'
+
+Check tile securing::
+
+    >>> from pyramid.interfaces import IAuthenticationPolicy
+    >>> from pyramid.interfaces import IAuthorizationPolicy
+    >>> from pyramid.authentication import CallbackAuthenticationPolicy
+    >>> from pyramid.authorization import ACLAuthorizationPolicy
+    >>> from pyramid.threadlocal import get_current_registry
+    
+    >>> def groups_callback(name, request):
+    ...     if name == 'admin':
+    ...         return ['group:admins', 'role:manager']
+    ...     return []
+    
+    >>> registry = get_current_registry()
+    
+    >>> authn = CallbackAuthenticationPolicy()
+    >>> authn.unauthenticated_userid = lambda *args: 'admin'
+    >>> authn.callback = groups_callback
+    >>> registry.registerUtility(authn, IAuthenticationPolicy)
+    
+    >>> authz = ACLAuthorizationPolicy()
+    >>> registry.registerUtility(authz, IAuthorizationPolicy)

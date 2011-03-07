@@ -1,1 +1,2 @@
-<span>Tile Three: <tal: tal:replace="context.data" /></span>
+<span>Tile Three</span>
+<tal:redirect define="dummy context.redirect('http://example.com/foo')" />

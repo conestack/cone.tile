@@ -1,0 +1,1 @@
+<span tal:content="context.nodeurl">url</span>

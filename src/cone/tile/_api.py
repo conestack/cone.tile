@@ -62,6 +62,8 @@ def _redirect(kw):
 
 
 def render_template(path, **kw):
+    """Render template considering redirect flag.
+    """
     kw = _update_kw(**kw)
     if _redirect(kw):
         return u''
@@ -73,6 +75,8 @@ def render_template(path, **kw):
 
 
 def render_template_to_response(path, **kw):
+    """Render template to response considering redirect flag.
+    """
     kw = _update_kw(**kw)
     kw['request'].environ['redirect'] = None
     info = RendererHelper(name=path, registry=kw['request'].registry)
@@ -89,6 +93,8 @@ def render_template_to_response(path, **kw):
 
 
 def render_to_response(request, result):
+    """Render result to response considering redirect flag.
+    """
     if _redirect(kw={'request': request}):
         redirect = request.environ['redirect']
         if isinstance(redirect, HTTPFound):
@@ -100,7 +106,9 @@ def render_to_response(request, result):
 
 
 def render_tile(model, request, name):
-    """renders a tile. Intended usage is in application code.
+    """Render a tile.
+    
+    Intended usage is in application code.
     
     ``model``
         application model aka context
@@ -115,13 +123,18 @@ def render_tile(model, request, name):
         tile = request.registry.getMultiAdapter((model, request),
                                                 ITile, name=name)
     except ComponentLookupError, e:
+        # XXX: logging
+        # XXX: debug mode raising error
         return u"Tile with name '%s' not found:<br /><pre>%s</pre>" % \
                (name, cgi.escape(str(e)))
     return tile
 
 
 class TileRenderer(object):
-    """Renders a tile. Intended usage is as instance in template code."""
+    """Render a tile.
+    
+    Intended usage is as instance in template code.
+    """
     
     def __init__(self, model, request):
         self.model, self.request = model, request
@@ -145,10 +158,13 @@ class Tile(object):
         if not self.show:
             return u''
         if self.path:
-            return render_template(self.path, request=request,
-                                   model=model, context=self)
-        renderer = getattr(self, self.attribute)
-        result = renderer()
+            result = render_template(self.path, request=request,
+                                     model=model, context=self)
+        else:
+            renderer = getattr(self, self.attribute)
+            result = renderer()
+        if request.environ.get('redirect'):
+            return u''
         return result
     
     @property
@@ -159,7 +175,7 @@ class Tile(object):
         pass
     
     def render(self):
-        return u''
+        raise NotImplementedError('Base Tile does not implement ``render``')
     
     def redirect(self, redirect):
         """Given param is either a string containing a URL or a HTTPFound
@@ -174,6 +190,8 @@ class Tile(object):
     
     @property
     def nodeurl(self):
+        """XXX: move out from here
+        """
         relpath = [p for p in self.model.path if p is not None]
         return '/'.join([self.request.application_url] + relpath)
 

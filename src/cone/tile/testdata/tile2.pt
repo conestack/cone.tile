@@ -1,1 +1,2 @@
 <span>Tile Two: <b tal:content="structure tile('tileone')"/></span>
+<span tal:content="context.data">data</span>
