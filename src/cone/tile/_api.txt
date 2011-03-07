@@ -1,27 +1,10 @@
 Prepare Tests::
 
     >>> from pyramid import testing
-    
-    >>> from pyramid.security import Everyone
-    >>> from pyramid.security import Allow
-    >>> from pyramid.security import Deny
-    >>> from pyramid.security import ALL_PERMISSIONS
-    
-    >>> from pyramid import testing
-    
+    >>> request = testing.DummyRequest()
     >>> class Model(testing.DummyResource):
     ...     path = [None]
-    ...     __acl__ = [
-    ...        (Allow, 'system.Authenticated', ['view']),
-    ...        (Allow, 'group:admins', ['edit']),
-    ...        (Allow, 'role:manager', ['delete']),
-    ...        (Allow, Everyone, ['login']),
-    ...        (Deny, Everyone, ALL_PERMISSIONS),
-    ...     ]
-    
     >>> model = Model()
-    
-    >>> request = testing.DummyRequest()
 
     >>> from cone.tile import Tile
     >>> from cone.tile import TileRenderer
@@ -242,18 +225,129 @@ Check tile securing::
     >>> from pyramid.authentication import CallbackAuthenticationPolicy
     >>> from pyramid.authorization import ACLAuthorizationPolicy
     >>> from pyramid.threadlocal import get_current_registry
+    >>> from pyramid.security import Everyone
+    >>> from pyramid.security import Allow
+    >>> from pyramid.security import Deny
+    >>> from pyramid.security import ALL_PERMISSIONS
+    
+    >>> __acl__ = [
+    ...    (Allow, 'system.Authenticated', ['view']),
+    ...    (Allow, 'group:editor', ['edit']),
+    ...    (Allow, 'role:manager', ['delete']),
+    ...    (Allow, Everyone, ['login']),
+    ...    (Deny, Everyone, ALL_PERMISSIONS),
+    ... ]
+    
+    >>> model.__acl__ = __acl__
     
     >>> def groups_callback(name, request):
-    ...     if name == 'admin':
-    ...         return ['group:admins', 'role:manager']
+    ...     if name == 'admin_user':
+    ...         return ['role:manager', 'group:editor']
+    ...     if name == 'editor_user':
+    ...         return ['group:editor']
     ...     return []
     
     >>> registry = get_current_registry()
     
     >>> authn = CallbackAuthenticationPolicy()
-    >>> authn.unauthenticated_userid = lambda *args: 'admin'
+    >>> authn.unauthenticated_userid = lambda *args: None
     >>> authn.callback = groups_callback
     >>> registry.registerUtility(authn, IAuthenticationPolicy)
     
     >>> authz = ACLAuthorizationPolicy()
     >>> registry.registerUtility(authz, IAuthorizationPolicy)
+
+    >>> @tile('protected_login', permission='login')
+    ... class ProtectedLogin(Tile):
+    ...     def render(self):
+    ...         return u'permission login'
+    
+    >>> render_tile(model, request, 'protected_login')
+    u'permission login'
+    
+    >>> @tile('protected_view', permission='view')
+    ... class ProtectedView(Tile):
+    ...     def render(self):
+    ...         return u'permission view'
+    
+    >>> render_tile(model, request, 'protected_view')
+    Traceback (most recent call last):
+      ...
+    Forbidden: Unauthorized: tile <ProtectedView object at ...> failed 
+    permission check
+    
+    >>> authn.unauthenticated_userid = lambda *args: 'max'
+    >>> render_tile(model, request, 'protected_view')
+    u'permission view'
+    
+    >>> @tile('protected_edit', permission='edit')
+    ... class ProtectedEdit(Tile):
+    ...     def render(self):
+    ...         return u'permission edit'
+    
+    >>> render_tile(model, request, 'protected_edit')
+    Traceback (most recent call last):
+      ...
+    Forbidden: Unauthorized: tile <ProtectedEdit object at ...> failed 
+    permission check
+    
+    >>> authn.unauthenticated_userid = lambda *args: 'editor_user'
+    >>> render_tile(model, request, 'protected_edit')
+    u'permission edit'
+    
+    >>> @tile('protected_delete', permission='delete')
+    ... class ProtectedDelete(Tile):
+    ...     def render(self):
+    ...         return u'permission delete'
+    >>> render_tile(model, request, 'protected_delete')
+    Traceback (most recent call last):
+      ...
+    Forbidden: Unauthorized: tile <ProtectedDelete object at ...> failed 
+    permission check
+    
+    >>> authn.unauthenticated_userid = lambda *args: 'admin_user'
+    >>> render_tile(model, request, 'protected_delete')
+    u'permission delete'
+    
+    >>> render_tile(model, request, 'protected_edit')
+    u'permission edit'
+    
+    >>> render_tile(model, request, 'protected_view')
+    u'permission view'
+    
+    >>> render_tile(model, request, 'protected_login')
+    u'permission login'
+    
+    >>> from pyramid.interfaces import IDebugLogger
+    >>> class DummyLogger(object):
+    ...     def __init__(self):
+    ...         self.messages = []
+    ...     def info(self, msg):
+    ...         self.messages.append(msg)
+    ...     warn = info
+    ...     debug = info
+    
+    >>> logger = DummyLogger()
+    >>> registry.registerUtility(logger, IDebugLogger)
+    
+    >>> @tile('protected_unstrict', permission='delete', strict=False)
+    ... class ProtectedUnstrict(Tile):
+    ...     def render(self):
+    ...         return u'unsctrict'
+    >>> authn.unauthenticated_userid = lambda *args: None
+    >>> request.registry.settings = {'debug_authorization': True}
+    >>> render_tile(model, request, 'protected_unstrict')
+    u''
+    
+    >>> logger.messages
+    ['Unauthorized: tile <ProtectedUnstrict object at ...> failed 
+    permission check']
+    
+    >>> @tile('raisingtile', permission='login')
+    ... class RaisingTile(Tile):
+    ...     def render(self):
+    ...         raise Exception(u'Tile is not willing to perform')
+    >>> render_tile(model, request, 'raisingtile')
+    Traceback (most recent call last):
+      ...
+    Exception: Tile is not willing to perform

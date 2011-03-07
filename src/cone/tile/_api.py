@@ -215,7 +215,7 @@ def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
             raise Forbidden(msg)
         settings = request.registry.settings
         if settings.get('debug_authorization', False):
-            logger = IDebugLogger()
+            logger = request.registry.getUtility(IDebugLogger)
             logger.debug(msg)
         return u''
     _secured_tile.__call_permissive__ = tile
