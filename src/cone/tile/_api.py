@@ -3,8 +3,8 @@ import cgi
 from webob import Response
 from webob.exc import HTTPFound
 from zope.interface import (
-    Interface, 
-    Attribute, 
+    Interface,
+    Attribute,
     implements,
 )
 from zope.component import ComponentLookupError
@@ -29,29 +29,29 @@ from pyramid.chameleon_zpt import ZPTTemplateRenderer
 class ITile(Interface):
     """Renders some HTML snippet.
     """
-    
+
     name = Attribute(u"The name und which this tile is registered.")
     show = Attribute(u"Flag wether to render the tile.")
-    
+
     def __call__(model, request):
         """Renders the tile.
-        
-        It's intended to work this way: First it calls its own prepare method, 
-        then it checks its own show attribute. If this returns True it renders 
-        the template in the context of the ITile implementing class instance.  
+
+        It's intended to work this way: First it calls its own prepare method,
+        then it checks its own show attribute. If this returns True it renders
+        the template in the context of the ITile implementing class instance.
         """
-        
+
     def prepare():
         """Prepares the tile.
-        
-        I.e. fetch data to display ... 
+
+        I.e. fetch data to display ...
         """
 
 
 def _update_kw(**kw):
     if not ('request' in kw and 'model' in kw):
         raise ValueError, "Expected kwargs missing: model, request."
-    kw.update({'tile': TileRenderer(kw['model'], kw['request'])})    
+    kw.update({'tile': TileRenderer(kw['model'], kw['request'])})
     return kw
 
 
@@ -67,11 +67,11 @@ def render_template(path, **kw):
     kw = _update_kw(**kw)
     if _redirect(kw):
         return u''
-    if not (':' in path or os.path.isabs(path)): 
+    if not (':' in path or os.path.isabs(path)):
         raise ValueError, 'Relative path not supported: %s' % path
     info = RendererHelper(name=path, registry=kw['request'].registry)
     renderer = template_renderer_factory(info, ZPTTemplateRenderer)
-    return renderer(kw, {})    
+    return renderer(kw, {})
 
 
 def render_template_to_response(path, **kw):
@@ -107,16 +107,16 @@ def render_to_response(request, result):
 
 def render_tile(model, request, name):
     """Render a tile.
-    
+
     Intended usage is in application code.
-    
+
     ``model``
         application model aka context
-        
+
     ``request``
         the current request
-        
-    ``name`` 
+
+    ``name``
         name of the requested tile
     """
     try:
@@ -135,20 +135,20 @@ def render_tile(model, request, name):
 
 class TileRenderer(object):
     """Render a tile.
-    
+
     Intended usage is as instance in template code.
     """
-    
+
     def __init__(self, model, request):
         self.model, self.request = model, request
-    
+
     def __call__(self, name):
         return render_tile(self.model, self.request, name)
 
 
 class Tile(object):
     implements(ITile)
-    
+
     def __init__(self, path, attribute, name):
         self.name = name
         self.path = path
@@ -169,28 +169,28 @@ class Tile(object):
         if request.environ.get('redirect'):
             return u''
         return result
-    
+
     @property
-    def show(self): 
+    def show(self):
         return True
-    
-    def prepare(self): 
+
+    def prepare(self):
         pass
-    
+
     def render(self):
         raise NotImplementedError('Base Tile does not implement ``render``')
-    
+
     def redirect(self, redirect):
         """Given param is either a string containing a URL or a HTTPFound
         instance.
-        
+
         Why do we need a redirect in a tile?
-        
+
         A tile is not always rendered to the response, form tiles i.e.
         might perform redirection.
         """
         self.request.environ['redirect'] = redirect
-    
+
     @property
     def nodeurl(self):
         """XXX: move out from here
@@ -233,66 +233,66 @@ def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
 
 # Registration
 def registerTile(name, path=None, attribute='render',
-                 interface=Interface, class_=Tile, 
+                 interface=Interface, class_=Tile,
                  permission='view', strict=True, _level=2):
     """registers a tile.
-    
+
     ``name``
         identifier of the tile (for later lookup).
-    
+
     ``path``
         either relative path to the template or absolute path or path prefixed
         by the absolute package name delimeted by ':'. If ``path`` is used
-        ``attribute`` is ignored. 
-        
+        ``attribute`` is ignored.
+
     ``attribute``
         attribute on the given _class to be used to render the tile. Defaults to
         ``render``.
-        
-    ``interface`` 
+
+    ``interface``
         Interface or Class of the pyramid model the tile is registered for.
-        
+
     ``class_``
         Class to be used to render the tile. usally ``cone.tile.Tile`` or a
         subclass of. Promises to implement ``cone.ITile``.
-        
-    ``permission`` 
+
+    ``permission``
         Enables security checking for this tile. Defaults to ``view``. If set to
         ``None`` security checks are disabled.
-        
+
     ``strict``
-        Wether to raise ``Forbidden`` or not. Defaults to ``True``. If set to 
-        ``False`` the exception is consumed and an empty unicode string is 
+        Wether to raise ``Forbidden`` or not. Defaults to ``True``. If set to
+        ``False`` the exception is consumed and an empty unicode string is
         returned.
 
-    ``_level`` 
+    ``_level``
         is a bit special to make doctests pass the magic path-detection.
         you must never touch it in application code.
-    """ 
-    if path and not (':' in path or os.path.isabs(path)): 
+    """
+    if path and not (':' in path or os.path.isabs(path)):
         path = '%s:%s' % (caller_package(_level).__name__, path)
     tile = class_(path, attribute, name)
     registry = get_current_registry()
     if permission is not None:
         authn_policy = registry.queryUtility(IAuthenticationPolicy)
-        authz_policy = registry.queryUtility(IAuthorizationPolicy)    
-        tile = _secure_tile(tile, permission, authn_policy, authz_policy, 
+        authz_policy = registry.queryUtility(IAuthorizationPolicy)
+        tile = _secure_tile(tile, permission, authn_policy, authz_policy,
                             strict)
-    registry.registerAdapter(tile, [interface, IRequest], ITile, name, 
+    registry.registerAdapter(tile, [interface, IRequest], ITile, name,
                              event=False)
 
 
 class tile(object):
     """Decorator to register classes and functions as tiles.
     """
-    
+
     def __init__(self, name, path=None, attribute='render',
                  interface=Interface, permission='view',
                  strict=True, _level=2):
         """ see ``registerTile`` for details on the other parameters.
         """
         self.name = name
-        if path and not (':' in path or os.path.isabs(path)): 
+        if path and not (':' in path or os.path.isabs(path)):
             path = '%s:%s' % (caller_package(_level).__name__, path)
         self.path = path
         self.attribute = attribute
