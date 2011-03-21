@@ -1,5 +1,6 @@
 import os
 import cgi
+import urllib
 from webob import Response
 from webob.exc import HTTPFound
 from zope.interface import (
@@ -195,7 +196,10 @@ class Tile(object):
     def nodeurl(self):
         """XXX: move out from here
         """
-        relpath = [p for p in self.model.path if p is not None]
+        #XXX: see cone.app.browser.utils, not imported in order not to
+        #depend on it, as this is supposed to move anyway
+        relpath = [urllib.quote(p.replace('/', '__s_l_a_s_h__')) \
+                       for p in self.model.path if p is not None]
         return '/'.join([self.request.application_url] + relpath)
 
 
