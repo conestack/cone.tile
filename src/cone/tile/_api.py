@@ -121,9 +121,12 @@ def render_tile(model, request, name):
         name of the requested tile
     """
     try:
+        # XXX: not a very well solution due to error swallowing
         tile = request.registry.getMultiAdapter((model, request),
                                                 ITile, name=name)
     except ComponentLookupError, e:
+        # XXX: ComponentLookupError appears even if another error causes tile
+        #      __call__ to fail.
         settings = request.registry.settings
         if settings.get('debug_authorization', False):
             msg = u"Error in rendering_tile: %s" % str(e)
