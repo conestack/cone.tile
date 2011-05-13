@@ -14,6 +14,8 @@ from pyramid.interfaces import (
     IResponseFactory,
     IAuthenticationPolicy,
     IAuthorizationPolicy,
+    IViewClassifier,
+    ISecuredView,
     IDebugLogger,
 )
 from pyramid.config import preserve_view_attrs
@@ -283,8 +285,14 @@ def registerTile(name, path=None, attribute='render',
     if permission is not None:
         authn_policy = registry.queryUtility(IAuthenticationPolicy)
         authz_policy = registry.queryUtility(IAuthorizationPolicy)
-        tile = _secure_tile(tile, permission, authn_policy, authz_policy,
-                            strict)
+        # XXX: think of usage of ``pyramid.config.ViewDeriver`` here
+        tile = _secure_tile(
+            tile, permission, authn_policy, authz_policy, strict)
+        registry.registerAdapter(
+            tile,
+            (IViewClassifier, IRequest, interface),
+            ISecuredView,
+            name)
     registry.registerAdapter(tile, [interface, IRequest], ITile, name,
                              event=False)
 
