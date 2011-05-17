@@ -49,12 +49,22 @@ For simplification in Python code the same can be achieved by::
     >>> render_tile(model, request, 'tileone')
     u'<span>Tile One</span>'
 
-Render error message if tile ComponentLookupError::
+By default, render error message if tile ComponentLookupError::
 
     >>> render_tile(model, request, 'inexistent')
     u"Tile with name 'inexistent' not found:<br /><pre>((&lt;__builtin__.Model 
     instance at ...&gt;, &lt;pyramid.testing.DummyRequest object at ...&gt;), 
     &lt;InterfaceClass cone.tile._api.ITile&gt;, 'inexistent')</pre>"
+
+To change the above behavior, the ``catch_errors`` argument can be changed to
+``False``, thus preventing error swallowing::
+
+    >>> render_tile(model, request, 'inexistent', catch_errors=False)
+    Traceback (most recent call last):
+      ...
+    ComponentLookupError: ((<__builtin__.Model instance at ...>,
+    <pyramid.testing.DummyRequest object at ...>), <InterfaceClass
+    cone.tile._api.ITile>, 'inexistent')
 
 Now the decorator (ignore the ``_level``)::
 

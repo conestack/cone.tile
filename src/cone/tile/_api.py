@@ -108,7 +108,7 @@ def render_to_response(request, result):
     return response_factory(result)
 
 
-def render_tile(model, request, name):
+def render_tile(model, request, name, catch_errors=True):
     """Render a tile.
 
     Intended usage is in application code.
@@ -121,10 +121,16 @@ def render_tile(model, request, name):
 
     ``name``
         name of the requested tile
+
+    ``catch_errors``
+        if set to False, ComponentLookupError will be propagated, otherwise it
+        will be catched and the error message will be returned as the result
     """
+    if not catch_errors:
+        return request.registry.getMultiAdapter((model, request),
+                                                ITile, name=name)
     try:
-        # XXX: not a very well solution due to error swallowing
-        tile = request.registry.getMultiAdapter((model, request),
+        return request.registry.getMultiAdapter((model, request),
                                                 ITile, name=name)
     except ComponentLookupError, e:
         # XXX: ComponentLookupError appears even if another error causes tile
@@ -136,7 +142,6 @@ def render_tile(model, request, name):
             logger.debug(msg)
         return u"Tile with name '%s' not found:<br /><pre>%s</pre>" % \
                (name, cgi.escape(str(e)))
-    return tile
 
 
 class TileRenderer(object):
