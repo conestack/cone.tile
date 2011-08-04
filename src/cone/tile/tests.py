@@ -8,7 +8,7 @@ optionflags = doctest.NORMALIZE_WHITESPACE | \
               doctest.REPORT_ONLY_FIRST_FAILURE
 
 TESTFILES = [
-    '_api.txt',
+    '_api.rst',
 ]
 
 def test_suite():
