@@ -307,7 +307,7 @@ View permission protected tile rendering fails for anonymous::
     >>> render_tile(model, request, 'protected_view')
     Traceback (most recent call last):
       ...
-    Forbidden: Unauthorized: tile <ProtectedView object at ...> failed 
+    HTTPForbidden: Unauthorized: tile <ProtectedView object at ...> failed 
     permission check
 
     >>> from pyramid.security import view_execution_permitted
@@ -339,7 +339,7 @@ Edit permission protected tile rendering fails for authenticated::
     >>> render_tile(model, request, 'protected_edit')
     Traceback (most recent call last):
       ...
-    Forbidden: Unauthorized: tile <ProtectedEdit object at ...> failed 
+    HTTPForbidden: Unauthorized: tile <ProtectedEdit object at ...> failed 
     permission check
 
 Set authenticated to 'editor_user'::
@@ -360,7 +360,7 @@ Delete permission protected tile rendering fails for editor::
     >>> render_tile(model, request, 'protected_delete')
     Traceback (most recent call last):
       ...
-    Forbidden: Unauthorized: tile <ProtectedDelete object at ...> failed 
+    HTTPForbidden: Unauthorized: tile <ProtectedDelete object at ...> failed 
     permission check
 
 Set User to 'admin_user'::
