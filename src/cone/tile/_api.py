@@ -18,7 +18,12 @@ from pyramid.interfaces import (
     ISecuredView,
     IDebugLogger,
 )
-from pyramid.config import preserve_view_attrs
+try:
+    # pyramid 1.1
+    from pyramid.config import preserve_view_attrs
+except ImportError:
+    # pyramid 1.2
+    from pyramid.config.views import preserve_view_attrs
 from pyramid.exceptions import Forbidden
 from pyramid.threadlocal import get_current_registry
 from pyramid.path import caller_package
@@ -33,7 +38,7 @@ class ITile(Interface):
     """Renders some HTML snippet.
     """
 
-    name = Attribute(u"The name und which this tile is registered.")
+    name = Attribute(u"The name under which this tile is registered.")
     show = Attribute(u"Flag wether to render the tile.")
 
     def __call__(model, request):
@@ -268,7 +273,7 @@ def registerTile(name, path=None, attribute='render',
 
     ``class_``
         Class to be used to render the tile. usally ``cone.tile.Tile`` or a
-        subclass of. Promises to implement ``cone.ITile``.
+        subclass of. Promises to implement ``cone.tile.ITile``.
 
     ``permission``
         Enables security checking for this tile. Defaults to ``view``. If set to
