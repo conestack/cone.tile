@@ -142,8 +142,8 @@ Contributors
 Changelog
 =========
 
-0.9
----
+0.9dev
+------
 
 - Fit for pyramid 1.1 + 1.2
   [rnix, 2011-09-08]
