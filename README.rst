@@ -4,7 +4,8 @@ Tiles for use in pyramid
 This package is the successor of
 `bda.bfg.tile <http://pypi.python.org/pypi/bda.bfg.tile>`_.
 
-It provides to render a website constisting of flexible tiles for pyramid. 
+It provides rendering snippets of markup organized as tiles for the pyramid
+framework. 
 
 A tile is a piece of web application, i.e. a form, a navigation, etc. 
 
