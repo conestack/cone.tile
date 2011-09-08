@@ -121,11 +121,12 @@ cone.tile.render_to_response
 Test coverage
 =============
 
-::
-    lines   cov%   module
-        1   100%   cone.tile.__init__
-      186    98%   cone.tile._api
-       12   100%   cone.tile.tests
+Summary of the test coverage report::
+
+  lines   cov%   module
+      1   100%   cone.tile.__init__
+    186    98%   cone.tile._api
+     12   100%   cone.tile.tests
 
 
 Contributors
