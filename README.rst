@@ -94,26 +94,25 @@ Further, the ``show`` flag is considered (which might have been set in the
 More on rendering
 -----------------
 
+There are helper functions for rendering which pass the tile renderer to 
+templates for invoking child tiles and consider redirections.
+
 The tile class provides a redirect function, which expects either a string
 containing a URL or a ``webob.exc.HTTPFound`` instance. This causes rendering 
 of remaining tiles to be skipped and ``request.environ['redirect']`` to be set.
 
-There are helper functions for rendering results and templates which
-consider redirections and pass the tile renderer to templates for rendering
-child tiles.
-
 cone.tile.render_template
-    Render template considering redirection. Returns empty string if
-    redirection found. Also passes tile renderer to template.
+    Render template. Passes tile renderer to template. Considers redirection.
+    Returns empty string if redirection found.
 
 cone.tile.render_template_to_response
-    Render template to response considering redirection. Returns HTTPFound if
-    redirection found, otherwise rendered response. Also passes tile renderer 
-    to template.
+    Render template to response. Passes tile renderer to template. Considers
+    redirection. Returns HTTPFound instance if redirection found, otherwise
+    rendered response.
 
 cone.tile.render_to_response
     Renders some result to the response considering redirection. Returns
-    HTTPFound if redirection found, otherwise rendered response.
+    HTTPFound instance if redirection found, otherwise rendered response.
 
 
 Test coverage
@@ -123,7 +122,7 @@ Summary of the test coverage report::
 
   lines   cov%   module
       1   100%   cone.tile.__init__
-    186    98%   cone.tile._api
+    186   100%   cone.tile._api
      12   100%   cone.tile.tests
 
 
