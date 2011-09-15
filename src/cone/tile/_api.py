@@ -21,9 +21,9 @@ from pyramid.interfaces import (
 try:
     # pyramid 1.1
     from pyramid.config import preserve_view_attrs
-except ImportError:
+except ImportError:                                         #pragma NO COVERAGE
     # pyramid 1.2
-    from pyramid.config.views import preserve_view_attrs
+    from pyramid.config.views import preserve_view_attrs    #pragma NO COVERAGE
 from pyramid.exceptions import Forbidden
 from pyramid.threadlocal import get_current_registry
 from pyramid.path import caller_package
