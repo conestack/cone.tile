@@ -33,33 +33,33 @@ or the ``cone.tile.tile`` decorator on classes::
     ... class BTile(Tile):
     ...     pass
 
-Both, decorator and register function accept following attributes::
+Both, decorator and register function accept following arguments::
 
-name
+**name**
     Identifier of the tile (for later lookup).
 
-path
+**path**
     Either relative path to the template or absolute path or path prefixed
     by the absolute package name delimeted by ':'. If ``path`` is used
     ``attribute`` is ignored.
 
-attribute
+**attribute**
     Attribute on the given _class to be used to render the tile. Defaults to
     ``render``.
 
-interface
+**interface**
     Interface or class of the pyramid model the tile is registered for.
 
-class_
+**class_**
     Class to be used to render the tile. usally ``cone.tile.Tile`` or a
     subclass of. Promises to implement ``cone.tile.ITile``. When the ``tile``
     decorator is used, the decorated class is expected as tile implementation.
 
-permission
+**permission**
     Enables security checking for this tile. Defaults to ``view``. If set to
     ``None`` security checks are disabled.
 
-strict
+**strict**
     Wether to raise ``Forbidden`` or not if rendering is not permitted.
     Defaults to ``True``. If set to ``False`` the exception is consumed and an
     empty unicode string is returned.
@@ -101,16 +101,16 @@ The tile class provides a redirect function, which expects either a string
 containing a URL or a ``webob.exc.HTTPFound`` instance. This causes rendering 
 of remaining tiles to be skipped and ``request.environ['redirect']`` to be set.
 
-cone.tile.render_template
+**cone.tile.render_template**
     Render template. Passes tile renderer to template. Considers redirection.
     Returns empty string if redirection found.
 
-cone.tile.render_template_to_response
+**cone.tile.render_template_to_response**
     Render template to response. Passes tile renderer to template. Considers
     redirection. Returns HTTPFound instance if redirection found, otherwise
     rendered response.
 
-cone.tile.render_to_response
+**cone.tile.render_to_response**
     Renders some result to the response considering redirection. Returns
     HTTPFound instance if redirection found, otherwise rendered response.
 
@@ -129,9 +129,9 @@ Summary of the test coverage report::
 Contributors
 ============
 
-- Jens Klein <jens@bluedynamics.com>
+- Jens Klein <jens [at] bluedynamics [dot] com>
 
-- Robert Niederreiter <rnix@squarewave.at>
+- Robert Niederreiter <rnix [at] squarewave [dot] at>
 
 - Attila Olah
 
