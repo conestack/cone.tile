@@ -33,7 +33,7 @@ or the ``cone.tile.tile`` decorator on classes::
     ... class BTile(Tile):
     ...     pass
 
-Both, decorator and register function accept following arguments::
+Both, decorator and register function accept following arguments:
 
 **name**
     Identifier of the tile (for later lookup).
