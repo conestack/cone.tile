@@ -1,11 +1,9 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.9pre2'
-shortdesc = 'Handle web application parts as tiles.'
+version = '0.9'
+shortdesc = 'Provide parts of a web application as tiles.'
 longdesc = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
-longdesc = open(os.path.join(os.path.dirname(__file__), 'src', 'cone', 'tile',
-                                                        '_api.rst')).read()
 longdesc += open(os.path.join(os.path.dirname(__file__), 'LICENSE.rst')).read()
 
 setup(name='cone.tile',

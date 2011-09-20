@@ -1,5 +1,5 @@
-Tiles for use in pyramid
-========================
+Tiles for use in pyramid framework
+==================================
 
 This package provides rendering snippets of markup organized as tiles for the 
 pyramid framework. 
@@ -7,7 +7,7 @@ pyramid framework.
 A tile is a piece of web application, i.e. a form, a navigation, etc. 
 
 Splitting your application in such small and logic application parts makes it
-easy to re-use this application, simplifies application ajaxification and
+easy to re-use this application, simplifies application AJAXification and
 the use of same application parts in different manners.
 
 
@@ -139,8 +139,8 @@ Contributors
 Changelog
 =========
 
-0.9dev
-------
+0.9
+---
 
 - Fit for pyramid 1.1 + 1.2
   [rnix, 2011-09-08]
