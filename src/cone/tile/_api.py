@@ -6,7 +6,7 @@ from webob.exc import HTTPFound
 from zope.interface import (
     Interface,
     Attribute,
-    implements,
+    implementer,
 )
 from zope.component import ComponentLookupError
 from pyramid.interfaces import (
@@ -162,8 +162,8 @@ class TileRenderer(object):
         return render_tile(self.model, self.request, name)
 
 
+@implementer(ITile)
 class Tile(object):
-    implements(ITile)
 
     def __init__(self, path, attribute, name):
         self.name = name
