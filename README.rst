@@ -64,6 +64,9 @@ Both, decorator and register function accept following arguments:
     Defaults to ``True``. If set to ``False`` the exception is consumed and an
     empty unicode string is returned.
 
+Tiles can be overwritten later while application initialization by just
+registering it again. This is useful for application theming and customization.
+
 
 Rendering tiles
 ---------------
