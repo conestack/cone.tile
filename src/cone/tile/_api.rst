@@ -49,6 +49,12 @@ For simplification in Python code the same can be achieved by::
     >>> render_tile(model, request, 'tileone')
     u'<span>Tile One</span>'
 
+Override tile::
+
+    >>> registerTile('tileone', 'testdata/tile1_override.pt', _level=1)
+    >>> render_tile(model, request, 'tileone')
+    u'<span>Tile One Override</span>'
+
 By default, render error message if tile ComponentLookupError::
 
     >>> render_tile(model, request, 'inexistent')
@@ -73,7 +79,7 @@ Now the decorator (ignore the ``_level``)::
     ...     data = u'custom'
     
     >>> render_tile(model, request, 'tiletwo')
-    u'<span>Tile Two: <b><span>Tile One</span></b></span>\n<span>custom</span>'
+    u'<span>Tile Two: <b><span>Tile One Override</span></b></span>\n<span>custom</span>'
 
 Optional kw arg ``attribute`` can be given which is responsible to render the
 tile instead of defining a template. By default ``render`` is taken::
@@ -120,7 +126,7 @@ The URL to redirect to or a HTTPFound instance.
 
 This function sets request.environ['redirect'] with given value. It is
 considered in ``render_template``,  ``render_template_to_response`` and
-``render_to_response``.
+``render_to_response``::
 
     >>> from webob.exc import HTTPFound
     
@@ -382,12 +388,21 @@ others::
     >>> render_tile(model, request, 'protected_login')
     u'permission login'
 
+Override secured tile::
+
+    >>> @tile('protected_delete', permission='delete')
+    ... class ProtectedDeleteOverride(Tile):
+    ...     def render(self):
+    ...         return u'permission delete override'
+    >>> render_tile(model, request, 'protected_delete')
+    u'permission delete override'
+
 If tile is registered non-strict, render_tile returns empty string::
     
     >>> @tile('protected_unstrict', permission='delete', strict=False)
     ... class ProtectedUnstrict(Tile):
     ...     def render(self):
-    ...         return u'unsctrict'
+    ...         return u'unstrict'
     >>> authn.unauthenticated_userid = lambda *args: None
     >>> render_tile(model, request, 'protected_unstrict')
     u''

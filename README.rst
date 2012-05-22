@@ -122,16 +122,16 @@ Summary of the test coverage report::
 
   lines   cov%   module
       1   100%   cone.tile.__init__
-    186   100%   cone.tile._api
+    193   100%   cone.tile._api
      12   100%   cone.tile.tests
 
 
 Contributors
 ============
 
-- Jens Klein <jens [at] bluedynamics [dot] com>
-
 - Robert Niederreiter <rnix [at] squarewave [dot] at>
+
+- Jens Klein <jens [at] bluedynamics [dot] com>
 
 - Attila Olah
 
@@ -142,6 +142,9 @@ Changelog
 0.9.1dev
 --------
 
+- Tiles can be overwritten.
+  [rnix, 2012-05-22]
+  
 - Use ``zope.interface.implementer`` instead of ``zope.interface.implements``.
   [rnix, 2012-05-18]
 

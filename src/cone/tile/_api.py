@@ -251,9 +251,8 @@ def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
 
 
 # Registration
-def registerTile(name, path=None, attribute='render',
-                 interface=Interface, class_=Tile,
-                 permission='view', strict=True, _level=2):
+def registerTile(name, path=None, attribute='render', interface=Interface,
+                 class_=Tile, permission='view', strict=True, _level=2):
     """registers a tile.
 
     ``name``
@@ -278,7 +277,7 @@ def registerTile(name, path=None, attribute='render',
     ``permission``
         Enables security checking for this tile. Defaults to ``view``. If set to
         ``None`` security checks are disabled.
-
+    
     ``strict``
         Wether to raise ``Forbidden`` or not. Defaults to ``True``. If set to
         ``False`` the exception is consumed and an empty unicode string is
@@ -290,19 +289,36 @@ def registerTile(name, path=None, attribute='render',
     """
     if path and not (':' in path or os.path.isabs(path)):
         path = '%s:%s' % (caller_package(_level).__name__, path)
+    
     tile = class_(path, attribute, name)
+    
     registry = get_current_registry()
+    registered = registry.adapters.registered
+    unregister = registry.adapters.unregister
+    
     if permission is not None:
         authn_policy = registry.queryUtility(IAuthenticationPolicy)
         authz_policy = registry.queryUtility(IAuthorizationPolicy)
-        # XXX: think of usage of ``pyramid.config.ViewDeriver`` here
+        
         tile = _secure_tile(
             tile, permission, authn_policy, authz_policy, strict)
+        
+        exists = registered((IViewClassifier, IRequest, interface),
+                            ISecuredView, name=name)
+        if exists:
+            unregister((IViewClassifier, IRequest, interface),
+                       ISecuredView, name=name)
+        
         registry.registerAdapter(
             tile,
             (IViewClassifier, IRequest, interface),
             ISecuredView,
             name)
+    
+    exists = registered((interface, IRequest), ITile, name=name)
+    if exists:
+        unregister((interface, IRequest), ITile, name=name)
+    
     registry.registerAdapter(tile, [interface, IRequest], ITile, name,
                              event=False)
 
