@@ -421,9 +421,17 @@ If an error occours in tile, do not swallow error::
 Some messages were logged::
 
     >>> logger.messages
-    [u"Error in rendering_tile: ((<__builtin__.Model instance at ...>, 
+    [u"Unregister secured view for 
+    '<InterfaceClass zope.interface.Interface>' with name 'tileone'", 
+    u"Unregister tile for 
+    '<InterfaceClass zope.interface.Interface>' with name 'tileone'", 
+    u"Error in rendering_tile: ((<__builtin__.Model instance at ...>, 
     <pyramid.testing.DummyRequest object at ...>), 
     <InterfaceClass cone.tile._api.ITile>, 'inexistent')", 
+    u"Unregister secured view for '<InterfaceClass zope.interface.Interface>' 
+    with name 'protected_delete'", 
+    u"Unregister tile for '<InterfaceClass zope.interface.Interface>' 
+    with name 'protected_delete'", 
     'Unauthorized: tile <ProtectedUnstrict object at ...> failed 
     permission check']
     

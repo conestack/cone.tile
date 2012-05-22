@@ -296,6 +296,8 @@ def registerTile(name, path=None, attribute='render', interface=Interface,
     registered = registry.adapters.registered
     unregister = registry.adapters.unregister
     
+    logger = registry.getUtility(IDebugLogger)
+    
     if permission is not None:
         authn_policy = registry.queryUtility(IAuthenticationPolicy)
         authz_policy = registry.queryUtility(IAuthorizationPolicy)
@@ -306,6 +308,9 @@ def registerTile(name, path=None, attribute='render', interface=Interface,
         exists = registered((IViewClassifier, IRequest, interface),
                             ISecuredView, name=name)
         if exists:
+            msg = u"Unregister secured view for '%s' with name '%s'" % (
+                str(interface), name)
+            logger.debug(msg)
             unregister((IViewClassifier, IRequest, interface),
                        ISecuredView, name=name)
         
@@ -317,6 +322,9 @@ def registerTile(name, path=None, attribute='render', interface=Interface,
     
     exists = registered((interface, IRequest), ITile, name=name)
     if exists:
+        msg = u"Unregister tile for '%s' with name '%s'" % (
+            str(interface), name)
+        logger.debug(msg)
         unregister((interface, IRequest), ITile, name=name)
     
     registry.registerAdapter(tile, [interface, IRequest], ITile, name,
