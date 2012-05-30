@@ -142,8 +142,8 @@ Contributors
 Changelog
 =========
 
-0.9.1dev
---------
+0.9.1
+-----
 
 - Tiles can be overwritten.
   [rnix, 2012-05-22]
