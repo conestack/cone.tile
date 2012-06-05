@@ -1,3 +1,8 @@
 *.pyc
 src/cone.tile.egg-info/
 dist/
+bin/
+parts/
+develop-eggs/
+eggs/
+.installed.cfg
