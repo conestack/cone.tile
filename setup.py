@@ -28,6 +28,7 @@ setup(name='cone.tile',
       zip_safe=False,
       install_requires=[
           'setuptools',
+          'zope.component',
           'pyramid',
       ],
       extras_require = dict(
