@@ -1,6 +1,8 @@
 import os
+import sys
 import cgi
 import urllib
+import logging
 from webob import Response
 from webob.exc import HTTPFound
 from zope.interface import (
@@ -32,6 +34,13 @@ from pyramid.renderers import (
     template_renderer_factory,
 )
 from pyramid.chameleon_zpt import ZPTTemplateRenderer
+from .exceptionformatter import format_exception
+
+logger = logging.getLogger('cone.tile')
+
+def log_exception(msg, exc, tb):
+    exc_str = '\n'.join(format_exception(exc.__class__, str(exc), tb))
+    logger.error('%s\n\n%s' % (msg, exc_str))
 
 
 class ITile(Interface):
@@ -79,7 +88,12 @@ def render_template(path, **kw):
         raise ValueError, 'Relative path not supported: %s' % path
     info = RendererHelper(name=path, registry=kw['request'].registry)
     renderer = template_renderer_factory(info, ZPTTemplateRenderer)
-    return renderer(kw, {})
+    try:
+        return renderer(kw, {})
+    except Exception, exc:
+        log_exception('Error while rendering tile template.', exc,
+                      sys.exc_traceback)
+        raise
 
 
 def render_template_to_response(path, **kw):
@@ -286,22 +300,22 @@ def registerTile(name, path=None, attribute='render', interface=Interface,
     """
     if path and not (':' in path or os.path.isabs(path)):
         path = '%s:%s' % (caller_package(_level).__name__, path)
-    
+
     tile = class_(path, attribute, name)
-    
+
     registry = get_current_registry()
     registered = registry.adapters.registered
     unregister = registry.adapters.unregister
-    
+
     logger = registry.getUtility(IDebugLogger)
-    
+
     if permission is not None:
         authn_policy = registry.queryUtility(IAuthenticationPolicy)
         authz_policy = registry.queryUtility(IAuthorizationPolicy)
-        
+
         tile = _secure_tile(
             tile, permission, authn_policy, authz_policy, strict)
-        
+
         exists = registered((IViewClassifier, IRequest, interface),
                             ISecuredView, name=name)
         if exists:
@@ -310,20 +324,20 @@ def registerTile(name, path=None, attribute='render', interface=Interface,
             logger.debug(msg)
             unregister((IViewClassifier, IRequest, interface),
                        ISecuredView, name=name)
-        
+
         registry.registerAdapter(
             tile,
             (IViewClassifier, IRequest, interface),
             ISecuredView,
             name)
-    
+
     exists = registered((interface, IRequest), ITile, name=name)
     if exists:
         msg = u"Unregister tile for '%s' with name '%s'" % (
             str(interface), name)
         logger.debug(msg)
         unregister((interface, IRequest), ITile, name=name)
-    
+
     registry.registerAdapter(tile, [interface, IRequest], ITile, name,
                              event=False)
 
