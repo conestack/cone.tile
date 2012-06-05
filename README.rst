@@ -142,6 +142,16 @@ Contributors
 Changelog
 =========
 
+0.9.2 unreleased
+----------------
+
+- removed superfluos try except
+  [jensens, 2012-06-05]
+
+- fixed dependecies for integrated tests
+  [jensens, 2012-06-05]
+
+
 0.9.1
 -----
 
