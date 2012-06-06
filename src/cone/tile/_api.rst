@@ -14,6 +14,8 @@ Prepare Tests::
     ...         self.messages = []
     ...     def info(self, msg):
     ...         self.messages.append(msg)
+    ...     def error(self, msg):
+    ...         self.messages.append(msg)
     ...     warn = info
     ...     debug = info
     
@@ -26,7 +28,7 @@ Prepare Tests::
     >>> from cone.tile import registerTile
     >>> from cone.tile import tile
 
-The Tile object. Normally not created directly, this is done due registration, 
+The Tile object. Normally not created directly, this is done due registration,
 see below::
 
     >>> mytile = Tile('cone.tile:testdata/tile1.pt', 'render', 'foo')
@@ -434,6 +436,33 @@ Some messages were logged::
     with name 'protected_delete'", 
     'Unauthorized: tile <ProtectedUnstrict object at ...> failed 
     permission check']
+    
+Log tile raising exception is called within a template::
+
+    >>> logger.messages = []
+    >>> from cone.tile import _api
+    >>> _api.logger = logger
+    >>> class TBSupplementMock(object):
+    ...     def getInfo(self, as_html=0):
+    ...         return '    - Mock Supplement Info'
+    >>> class BugMock(object):
+    ...     def __call__(self):
+    ...         __traceback_supplement__ = (TBSupplementMock,)
+    ...         raise Exception('MockException')
+    >>> try:
+    ...     render_template('cone.tile:testdata/tile_exc_bug.pt', 
+    ...                     model=model, request=request, bugcall=BugMock())
+    ... except Exception, exc:
+    ...     pass
+    >>> print logger.messages[0]
+    Error while rendering tile template.
+    ...
+      Module <doctest _api.rst[...]>, line ..., in __call__
+        raise Exception('MockException')
+        - Mock Supplement Info
+    <BLANKLINE>
+    Exception: MockException
+    <BLANKLINE>
     
 Cleanup::
 

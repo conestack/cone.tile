@@ -34,7 +34,7 @@ from pyramid.renderers import (
     template_renderer_factory,
 )
 from pyramid.chameleon_zpt import ZPTTemplateRenderer
-from .exceptionformatter import format_exception
+from zope.exceptions.exceptionformatter import format_exception
 
 logger = logging.getLogger('cone.tile')
 

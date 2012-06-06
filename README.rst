@@ -145,9 +145,13 @@ Changelog
 0.9.2 unreleased
 ----------------
 
+- using and depending now on zope.exceptions to format tracebacks with
+  supplements.
+  [jensens, 2012-06-06]
+
 - improved visibility of tracebacks, they appear now in the error log.
-  even if an expression like ```tal:replace="structure tile('editform')" ```
-  ate it the traceback is logged. traceback supplements are rendered.
+  even if an expression like ```tal:replace="structure tile('editform')"```
+  ate iti, the traceback is logged. traceback supplements are rendered.
   [jensens, 2012-06-05]
 
 - removed superfluos try except
