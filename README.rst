@@ -121,6 +121,10 @@ of remaining tiles to be skipped and ``request.environ['redirect']`` to be set.
 Test coverage
 =============
 
+
+.. image :: https://secure.travis-ci.org/bluedynamics/cone.tile.png
+  :target:  https://secure.travis-ci.org/bluedynamics/cone.tile
+
 Summary of the test coverage report::
 
   lines   cov%   module
