@@ -1,10 +1,10 @@
 Tiles for use in pyramid framework
 ==================================
 
-This package provides rendering snippets of markup organized as tiles for the 
-pyramid framework. 
+This package provides rendering snippets of markup organized as tiles for the
+pyramid framework.
 
-A tile is a piece of web application, i.e. a form, a navigation, etc. 
+A tile is a piece of web application, i.e. a form, a navigation, etc.
 
 Splitting your application in such small and logic application parts makes it
 easy to re-use this application, simplifies application AJAXification and
@@ -97,11 +97,11 @@ Further, the ``show`` flag is considered (which might have been set in the
 More on rendering
 -----------------
 
-There are helper functions for rendering which pass the tile renderer to 
+There are helper functions for rendering which pass the tile renderer to
 templates for invoking child tiles and consider redirections.
 
 The tile class provides a redirect function, which expects either a string
-containing a URL or a ``webob.exc.HTTPFound`` instance. This causes rendering 
+containing a URL or a ``webob.exc.HTTPFound`` instance. This causes rendering
 of remaining tiles to be skipped and ``request.environ['redirect']`` to be set.
 
 **cone.tile.render_template**
@@ -137,48 +137,3 @@ Contributors
 - Jens Klein <jens [at] bluedynamics [dot] com>
 
 - Attila Olah
-
-
-Changelog
-=========
-
-0.9.2 unreleased
-----------------
-
-- using and depending now on zope.exceptions to format tracebacks with
-  supplements.
-  [jensens, 2012-06-06]
-
-- improved visibility of tracebacks, they appear now in the error log.
-  even if an expression like ```tal:replace="structure tile('editform')"```
-  ate iti, the traceback is logged. traceback supplements are rendered.
-  [jensens, 2012-06-05]
-
-- removed superfluos try except
-  [jensens, 2012-06-05]
-
-- fixed dependecies for integrated tests
-  [jensens, 2012-06-05]
-
-
-0.9.1
------
-
-- Tiles can be overwritten.
-  [rnix, 2012-05-22]
-  
-- Use ``zope.interface.implementer`` instead of ``zope.interface.implements``.
-  [rnix, 2012-05-18]
-
-
-0.9
----
-
-- Fit for pyramid 1.1 + 1.2
-  [rnix, 2011-09-08]
-
-- Documentation
-  [rnix, 2011-09-08]
-
-- Make it work
-  [jensens, rnix, et. al]

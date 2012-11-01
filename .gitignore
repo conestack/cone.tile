@@ -6,3 +6,5 @@ parts/
 develop-eggs/
 eggs/
 .installed.cfg
+.project
+.pydevproject
