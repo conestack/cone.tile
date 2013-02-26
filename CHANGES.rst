@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.9.3dev
+--------
+
+- make ``cone.tile`` work with pyramid 1.4.
+  [rnix, 1013-02-26]
+
 0.9.2
 -----
 

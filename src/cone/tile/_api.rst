@@ -329,8 +329,8 @@ Set authenticated to 'max'::
 Test ``view_execution_permitted``::
 
     >>> from pyramid.security import view_execution_permitted
-    >>> view_execution_permitted(model, request)
-    <Allowed instance at ...
+    >>> view_execution_permitted(model, request, name='protected_view')
+    <ACLAllowed instance at ...
 
 Authenticated users are allowed to view tiles protected by view permission::
 
