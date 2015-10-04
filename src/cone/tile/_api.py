@@ -1,25 +1,4 @@
-import os
-import sys
-import cgi
-import urllib
-import logging
-from webob import Response
-from webob.exc import HTTPFound
-from zope.interface import (
-    Interface,
-    Attribute,
-    implementer,
-)
-from zope.component import ComponentLookupError
-from pyramid.interfaces import (
-    IRequest,
-    IResponseFactory,
-    IAuthenticationPolicy,
-    IAuthorizationPolicy,
-    IViewClassifier,
-    ISecuredView,
-    IDebugLogger,
-)
+from pyramid.chameleon_zpt import ZPTTemplateRenderer
 try:
     # pyramid 1.1
     from pyramid.config import preserve_view_attrs
@@ -27,16 +6,33 @@ except ImportError:                                         #pragma NO COVERAGE
     # pyramid 1.2
     from pyramid.config.views import preserve_view_attrs    #pragma NO COVERAGE
 from pyramid.exceptions import Forbidden
-from pyramid.threadlocal import get_current_registry
+from pyramid.interfaces import IAuthenticationPolicy
+from pyramid.interfaces import IAuthorizationPolicy
+from pyramid.interfaces import IDebugLogger
+from pyramid.interfaces import IRequest
+from pyramid.interfaces import IResponseFactory
+from pyramid.interfaces import ISecuredView
+from pyramid.interfaces import IViewClassifier
 from pyramid.path import caller_package
-from pyramid.renderers import (
-    RendererHelper,
-    template_renderer_factory,
-)
-from pyramid.chameleon_zpt import ZPTTemplateRenderer
+from pyramid.renderers import RendererHelper
+from pyramid.renderers import template_renderer_factory
+from pyramid.threadlocal import get_current_registry
+from webob import Response
+from webob.exc import HTTPFound
+from zope.component import ComponentLookupError
 from zope.exceptions.exceptionformatter import format_exception
+from zope.interface import Attribute
+from zope.interface import Interface
+from zope.interface import implementer
+import cgi
+import logging
+import os
+import sys
+import urllib
+
 
 logger = logging.getLogger('cone.tile')
+
 
 def log_exception(msg, exc, tb):
     exc_str = '\n'.join(format_exception(exc.__class__, str(exc), tb))
