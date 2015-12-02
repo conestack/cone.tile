@@ -3,7 +3,7 @@ from setuptools import setup
 import os
 
 
-version = '0.9.2'
+version = '1.0.dev0'
 shortdesc = 'Provide parts of a web application as tiles.'
 longdesc = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
 longdesc += open(os.path.join(os.path.dirname(__file__), 'CHANGES.rst')).read()
@@ -35,6 +35,7 @@ setup(name='cone.tile',
           'zope.component',
           'zope.exceptions',
           'pyramid',
+          'pyramid_chameleon',
       ],
       extras_require=dict(
           test=['interlude']

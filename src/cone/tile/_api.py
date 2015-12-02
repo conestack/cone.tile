@@ -1,4 +1,9 @@
-from pyramid.chameleon_zpt import ZPTTemplateRenderer
+try:
+    # pyramid 1.1
+    from pyramid.chameleon_zpt import ZPTTemplateRenderer
+except ImportError:
+    # pyramid 1.5
+    from pyramid_chameleon.zpt import ZPTTemplateRenderer
 try:
     # pyramid 1.1
     from pyramid.config import preserve_view_attrs
@@ -15,7 +20,12 @@ from pyramid.interfaces import ISecuredView
 from pyramid.interfaces import IViewClassifier
 from pyramid.path import caller_package
 from pyramid.renderers import RendererHelper
-from pyramid.renderers import template_renderer_factory
+try:
+    # pyramid 1.1
+    from pyramid.renderers import template_renderer_factory
+except ImportError:
+    # pyramid 1.5
+    from pyramid_chameleon.renderer import template_renderer_factory
 from pyramid.threadlocal import get_current_registry
 from webob import Response
 from webob.exc import HTTPFound

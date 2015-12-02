@@ -326,12 +326,6 @@ Set authenticated to 'max'::
 
     >>> authn.unauthenticated_userid = lambda *args: 'max'
 
-Test ``view_execution_permitted``::
-
-    >>> from pyramid.security import view_execution_permitted
-    >>> view_execution_permitted(model, request)
-    <Allowed instance at ...
-
 Authenticated users are allowed to view tiles protected by view permission::
 
     >>> render_tile(model, request, 'protected_view')

@@ -2,6 +2,17 @@
 Changelog
 =========
 
+1.0 (unreleased)
+----------------
+
+- Update to pyramid 1.5
+  [rnix, 2015-11-02]
+
+- Remove useless test case due to this change.
+  https://github.com/Pylons/pyramid/commit/4b552e539a1725356b9982261b73fd88de7d59a1#diff-bcda6948340ab38542fe18fd2365ac70R144
+  [rnix, 2015-11-02]
+
+
 0.9.2
 -----
 
