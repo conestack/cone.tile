@@ -5,6 +5,15 @@ Changelog
 1.0 (unreleased)
 ----------------
 
+- ``tile`` decorator uses ``venusian`` to defer tile registration now.
+
+- Accept ``name`` as keyword instead of positional argument in
+  ``register_tile`` and ``tile`` decorator.
+  [rnix, 2015-11-06]
+
+- ``registerTile`` has been renamed to ``register_tile``.
+  [rnix, 2015-11-06]
+
 - Update to pyramid 1.5
   [rnix, 2015-11-02]
 

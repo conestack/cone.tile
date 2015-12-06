@@ -1,15 +1,11 @@
 try:
-    # pyramid 1.1
     from pyramid.chameleon_zpt import ZPTTemplateRenderer
 except ImportError:
-    # pyramid 1.5
     from pyramid_chameleon.zpt import ZPTTemplateRenderer
 try:
-    # pyramid 1.1
     from pyramid.config import preserve_view_attrs
-except ImportError:                                         #pragma NO COVERAGE
-    # pyramid 1.2
-    from pyramid.config.views import preserve_view_attrs    #pragma NO COVERAGE
+except ImportError:
+    from pyramid.config.views import preserve_view_attrs
 from pyramid.httpexceptions import HTTPForbidden
 from pyramid.interfaces import IAuthenticationPolicy
 from pyramid.interfaces import IAuthorizationPolicy
@@ -21,10 +17,8 @@ from pyramid.interfaces import IViewClassifier
 from pyramid.path import caller_package
 from pyramid.renderers import RendererHelper
 try:
-    # pyramid 1.1
     from pyramid.renderers import template_renderer_factory
 except ImportError:
-    # pyramid 1.5
     from pyramid_chameleon.renderer import template_renderer_factory
 from pyramid.threadlocal import get_current_registry
 from webob import Response
@@ -283,9 +277,16 @@ def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
 
 
 # Registration
-def registerTile(name, path=None, attribute='render', interface=Interface,
-                 class_=Tile, permission='view', strict=True, _level=2):
-    """registers a tile.
+def register_tile(
+    name=None,
+    path=None,
+    attribute='render',
+    interface=Interface,
+    class_=Tile,
+    permission='view',
+    strict=True,
+    _level=2):
+    """Register a tile.
 
     ``name``
         identifier of the tile (for later lookup).
@@ -366,14 +367,24 @@ def registerTile(name, path=None, attribute='render', interface=Interface,
         event=False)
 
 
+registerTile = register_tile  # B/C
+
+
 class tile(object):
     """Decorator to register classes and functions as tiles.
     """
+    venusian = venusian  # for testing injection
 
-    def __init__(self, name, path=None, attribute='render',
-                 interface=Interface, permission='view',
-                 strict=True, _level=2):
-        """See ``registerTile`` for details on the other parameters.
+    def __init__(
+        self,
+        name=None,
+        path=None,
+        attribute='render',
+        interface=Interface,
+        permission='view',
+        strict=True,
+        _level=2):
+        """See ``register_tile`` for details on the other parameters.
         """
         self.name = name
         if path and not (':' in path or os.path.isabs(path)):
@@ -385,12 +396,16 @@ class tile(object):
         self.strict = strict
 
     def __call__(self, ob):
-        registerTile(
-            self.name,
-            path=self.path,
-            attribute=self.attribute,
-            interface=self.interface,
-            class_=ob,
-            permission=self.permission,
-            strict=self.strict)
+        kw = {
+            'name': self.name,
+            'path': self.path,
+            'attribute': self.attribute,
+            'interface': self.interface,
+            'class_': ob,
+            'permission': self.permission,
+            'strict': self.strict
+        }
+        def callback(context, name, ob):
+            register_tile(**kw)
+        self.venusian.attach(ob, callback, category='pyramid', depth=1)
         return ob

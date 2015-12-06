@@ -1,14 +1,44 @@
-Prepare Tests::
+cone.tile
+=========
 
+Test related imports::
+
+    >>> from cone.tile import Tile
+    >>> from cone.tile import TileRenderer
+    >>> from cone.tile import _api
+    >>> from cone.tile import register_tile
+    >>> from cone.tile import render_template
+    >>> from cone.tile import render_template_to_response
+    >>> from cone.tile import render_tile
+    >>> from cone.tile import render_to_response
+    >>> from cone.tile import tile
     >>> from pyramid import testing
+    >>> from pyramid.authentication import CallbackAuthenticationPolicy
+    >>> from pyramid.authorization import ACLAuthorizationPolicy
+    >>> from pyramid.interfaces import IAuthenticationPolicy
+    >>> from pyramid.interfaces import IAuthorizationPolicy
+    >>> from pyramid.interfaces import IDebugLogger
+    >>> from pyramid.security import ALL_PERMISSIONS
+    >>> from pyramid.security import Allow
+    >>> from pyramid.security import Deny
+    >>> from pyramid.security import Everyone
+    >>> from pyramid.security import view_execution_permitted
+    >>> from webob.exc import HTTPFound
+    >>> import venusian
+
+Prepare test environment::
+
+    >>> class DummyVenusian(object):
+    ...     def attach(self, wrapped, callback, category=None, depth=1):
+    ...         callback(None, None, wrapped)
+    ...         return None
+
+    >>> tile.venusian = DummyVenusian()
+
     >>> request = testing.DummyRequest()
     >>> registry = request.registry
     >>> request.registry.settings = {'debug_authorization': True}
-    >>> class Model(testing.DummyResource):
-    ...     path = [None]
-    >>> model = Model()
 
-    >>> from pyramid.interfaces import IDebugLogger
     >>> class DummyLogger(object):
     ...     def __init__(self):
     ...         self.messages = []
@@ -22,11 +52,10 @@ Prepare Tests::
     >>> logger = DummyLogger()
     >>> registry.registerUtility(logger, IDebugLogger)
 
-    >>> from cone.tile import Tile
-    >>> from cone.tile import TileRenderer
-    >>> from cone.tile import render_tile
-    >>> from cone.tile import registerTile
-    >>> from cone.tile import tile
+    >>> class Model(testing.DummyResource):
+    ...     path = [None]
+
+    >>> model = Model()
 
 The Tile object. Normally not created directly, this is done due registration,
 see below::
@@ -38,7 +67,7 @@ see below::
 Register a tile. When no object is given, the default Tile is instanciated.
 ``_level=1`` is needed for the doctest only to reduce the module level::
 
-    >>> registerTile('tileone', 'testdata/tile1.pt', _level=1)
+    >>> register_tile(name='tileone', path='testdata/tile1.pt', _level=1)
 
 Render registered tile - first how it works in templates::
 
@@ -53,7 +82,10 @@ For simplification in Python code the same can be achieved by::
 
 Override tile::
 
-    >>> registerTile('tileone', 'testdata/tile1_override.pt', _level=1)
+    >>> register_tile(
+    ...     name='tileone',
+    ...     path='testdata/tile1_override.pt',
+    ...     _level=1)
     >>> render_tile(model, request, 'tileone')
     u'<span>Tile One Override</span>'
 
@@ -76,7 +108,7 @@ To change the above behavior, the ``catch_errors`` argument can be changed to
 
 Now the decorator (ignore the ``_level``)::
 
-    >>> @tile('tiletwo', 'testdata/tile2.pt', _level=1)
+    >>> @tile(name='tiletwo', path='testdata/tile2.pt', _level=1)
     ... class TileTwo(Tile):
     ...     data = u'custom'
 
@@ -86,7 +118,7 @@ Now the decorator (ignore the ``_level``)::
 Optional kw arg ``attribute`` can be given which is responsible to render the
 tile instead of defining a template. By default ``render`` is taken::
 
-    >>> @tile('attrtile')
+    >>> @tile(name='attrtile')
     ... class TileDefaultRenderAttr(Tile):
     ...     def render(self):
     ...         return u'<h1>Rendered via attribute call</h1>'
@@ -94,7 +126,7 @@ tile instead of defining a template. By default ``render`` is taken::
     >>> render_tile(model, request, 'attrtile')
     u'<h1>Rendered via attribute call</h1>'
 
-    >>> @tile('foobarattrtile', attribute='foobar')
+    >>> @tile(name='foobarattrtile', attribute='foobar')
     ... class TileFoobarRenderAttr(Tile):
     ...     def foobar(self):
     ...         return u'<h1>Rendered via attribute foobar call</h1>'
@@ -104,7 +136,7 @@ tile instead of defining a template. By default ``render`` is taken::
 
 Default ``render`` raises NotImplementedError::
 
-    >>> @tile('norender')
+    >>> @tile(name='norender')
     ... class NotImplementedTile(Tile):
     ...     pass
 
@@ -116,7 +148,7 @@ Default ``render`` raises NotImplementedError::
 Tile check for ``show`` attribute and returns empty string if it evaluates to
 False::
 
-    >>> @tile('notshowtile')
+    >>> @tile(name='notshowtile')
     ... class TileDefaultRenderAttr(Tile):
     ...     show = 0
 
@@ -130,9 +162,7 @@ This function sets request.environ['redirect'] with given value. It is
 considered in ``render_template``,  ``render_template_to_response`` and
 ``render_to_response``::
 
-    >>> from webob.exc import HTTPFound
-
-    >>> @tile('redirecttile')
+    >>> @tile(name='redirecttile')
     ... class RedirectTile(Tile):
     ...     def render(self):
     ...         self.redirect(HTTPFound(location='http://example.com'))
@@ -145,7 +175,10 @@ considered in ``render_template``,  ``render_template_to_response`` and
 
     >>> del request.environ['redirect']
 
-    >>> registerTile('redirecttiletwo', 'testdata/tile3.pt', _level=1)
+    >>> register_tile(
+    ...     name='redirecttiletwo',
+    ...     path='testdata/tile3.pt',
+    ...     _level=1)
     >>> render_tile(model, request, 'redirecttiletwo')
     u''
 
@@ -156,7 +189,6 @@ considered in ``render_template``,  ``render_template_to_response`` and
 
 Test ``render_template``::
 
-    >>> from cone.tile import render_template
     >>> render_template('')
     Traceback (most recent call last):
       ...
@@ -190,7 +222,6 @@ Test ``render_template``::
 
 Test ``render_template_to_response``::
 
-    >>> from cone.tile import render_template_to_response
     >>> render_template_to_response('')
     Traceback (most recent call last):
       ...
@@ -230,7 +261,6 @@ Test ``render_template_to_response``::
 
 Test ``render_to_response``::
 
-    >>> from cone.tile import render_to_response
     >>> render_to_response(request, 'foo')
     <Response at ... 200 OK>
 
@@ -246,20 +276,11 @@ Test ``render_to_response``::
 
 Check ``nodeurl``::
 
-    >>> registerTile('urltile', 'testdata/tile4.pt', _level=1)
+    >>> register_tile(name='urltile', path='testdata/tile4.pt', _level=1)
     >>> render_tile(model, request, 'urltile')
     u'<span>http://example.com</span>\n'
 
-Check tile securing::
-
-    >>> from pyramid.interfaces import IAuthenticationPolicy
-    >>> from pyramid.interfaces import IAuthorizationPolicy
-    >>> from pyramid.authentication import CallbackAuthenticationPolicy
-    >>> from pyramid.authorization import ACLAuthorizationPolicy
-    >>> from pyramid.security import Everyone
-    >>> from pyramid.security import Allow
-    >>> from pyramid.security import Deny
-    >>> from pyramid.security import ALL_PERMISSIONS
+Check tile securing.
 
 Define ACL for model::
 
@@ -297,7 +318,7 @@ No authenticated user::
 
 Login permission protected tile can be rendered::
 
-    >>> @tile('protected_login', permission='login')
+    >>> @tile(name='protected_login', permission='login')
     ... class ProtectedLogin(Tile):
     ...     def render(self):
     ...         return u'permission login'
@@ -307,7 +328,7 @@ Login permission protected tile can be rendered::
 
 View permission protected tile rendering fails for anonymous::
 
-    >>> @tile('protected_view', permission='view')
+    >>> @tile(name='protected_view', permission='view')
     ... class ProtectedView(Tile):
     ...     def render(self):
     ...         return u'permission view'
@@ -318,7 +339,6 @@ View permission protected tile rendering fails for anonymous::
     HTTPForbidden: Unauthorized: tile <ProtectedView object at ...> failed 
     permission check
 
-    >>> from pyramid.security import view_execution_permitted
     >>> view_execution_permitted(model, request, name='protected_view')
     <ACLDenied instance ...
 
@@ -333,7 +353,7 @@ Authenticated users are allowed to view tiles protected by view permission::
 
 Edit permission protected tile rendering fails for authenticated::
 
-    >>> @tile('protected_edit', permission='edit')
+    >>> @tile(name='protected_edit', permission='edit')
     ... class ProtectedEdit(Tile):
     ...     def render(self):
     ...         return u'permission edit'
@@ -355,7 +375,7 @@ Editor is allowed to render edit permission protected tiles::
 
 Delete permission protected tile rendering fails for editor::
 
-    >>> @tile('protected_delete', permission='delete')
+    >>> @tile(name='protected_delete', permission='delete')
     ... class ProtectedDelete(Tile):
     ...     def render(self):
     ...         return u'permission delete'
@@ -386,7 +406,7 @@ others::
 
 Override secured tile::
 
-    >>> @tile('protected_delete', permission='delete')
+    >>> @tile(name='protected_delete', permission='delete')
     ... class ProtectedDeleteOverride(Tile):
     ...     def render(self):
     ...         return u'permission delete override'
@@ -395,7 +415,7 @@ Override secured tile::
 
 If tile is registered non-strict, render_tile returns empty string::
 
-    >>> @tile('protected_unstrict', permission='delete', strict=False)
+    >>> @tile(name='protected_unstrict', permission='delete', strict=False)
     ... class ProtectedUnstrict(Tile):
     ...     def render(self):
     ...         return u'unstrict'
@@ -405,7 +425,7 @@ If tile is registered non-strict, render_tile returns empty string::
 
 If an error occours in tile, do not swallow error::
 
-    >>> @tile('raisingtile', permission='login')
+    >>> @tile(name='raisingtile', permission='login')
     ... class RaisingTile(Tile):
     ...     def render(self):
     ...         raise Exception(u'Tile is not willing to perform')
@@ -434,7 +454,6 @@ Some messages were logged::
 Log tile raising exception is called within a template::
 
     >>> logger.messages = []
-    >>> from cone.tile import _api
     >>> _api.logger = logger
     >>> class TBSupplementMock(object):
     ...     def getInfo(self, as_html=0):
@@ -459,6 +478,8 @@ Log tile raising exception is called within a template::
     <BLANKLINE>
 
 Cleanup::
+
+    >>> tile.venusian = venusian
 
     >>> registry.unregisterUtility(logger, IDebugLogger)
     True
