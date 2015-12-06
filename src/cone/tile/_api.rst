@@ -7,7 +7,7 @@ Prepare Tests::
     >>> class Model(testing.DummyResource):
     ...     path = [None]
     >>> model = Model()
-    
+
     >>> from pyramid.interfaces import IDebugLogger
     >>> class DummyLogger(object):
     ...     def __init__(self):
@@ -18,7 +18,7 @@ Prepare Tests::
     ...         self.messages.append(msg)
     ...     warn = info
     ...     debug = info
-    
+
     >>> logger = DummyLogger()
     >>> registry.registerUtility(logger, IDebugLogger)
 
@@ -45,7 +45,7 @@ Render registered tile - first how it works in templates::
     >>> tilerenderer = TileRenderer(model, request)
     >>> tilerenderer('tileone')
     u'<span>Tile One</span>'
-    
+
 For simplification in Python code the same can be achieved by::
 
     >>> render_tile(model, request, 'tileone')
@@ -79,26 +79,26 @@ Now the decorator (ignore the ``_level``)::
     >>> @tile('tiletwo', 'testdata/tile2.pt', _level=1)
     ... class TileTwo(Tile):
     ...     data = u'custom'
-    
+
     >>> render_tile(model, request, 'tiletwo')
     u'<span>Tile Two: <b><span>Tile One Override</span></b></span>\n<span>custom</span>'
 
 Optional kw arg ``attribute`` can be given which is responsible to render the
 tile instead of defining a template. By default ``render`` is taken::
-    
+
     >>> @tile('attrtile')
     ... class TileDefaultRenderAttr(Tile):
     ...     def render(self):
     ...         return u'<h1>Rendered via attribute call</h1>'
-    
+
     >>> render_tile(model, request, 'attrtile')
     u'<h1>Rendered via attribute call</h1>'
-    
+
     >>> @tile('foobarattrtile', attribute='foobar')
     ... class TileFoobarRenderAttr(Tile):
     ...     def foobar(self):
     ...         return u'<h1>Rendered via attribute foobar call</h1>'
-    
+
     >>> render_tile(model, request, 'foobarattrtile')
     u'<h1>Rendered via attribute foobar call</h1>'
 
@@ -107,7 +107,7 @@ Default ``render`` raises NotImplementedError::
     >>> @tile('norender')
     ... class NotImplementedTile(Tile):
     ...     pass
-    
+
     >>> render_tile(model, request, 'norender')
     Traceback (most recent call last):
       ...
@@ -119,7 +119,7 @@ False::
     >>> @tile('notshowtile')
     ... class TileDefaultRenderAttr(Tile):
     ...     show = 0
-    
+
     >>> render_tile(model, request, 'notshowtile')
     u''
 
@@ -131,27 +131,27 @@ considered in ``render_template``,  ``render_template_to_response`` and
 ``render_to_response``::
 
     >>> from webob.exc import HTTPFound
-    
+
     >>> @tile('redirecttile')
     ... class RedirectTile(Tile):
     ...     def render(self):
     ...         self.redirect(HTTPFound(location='http://example.com'))
-    
+
     >>> render_tile(model, request, 'redirecttile')
     u''
-    
+
     >>> request.environ['redirect']
     <HTTPFound at ... 302 Found>
-    
+
     >>> del request.environ['redirect']
-    
+
     >>> registerTile('redirecttiletwo', 'testdata/tile3.pt', _level=1)
     >>> render_tile(model, request, 'redirecttiletwo')
     u''
-    
+
     >>> request.environ['redirect']
     'http://example.com/foo'
-    
+
     >>> del request.environ['redirect']
 
 Test ``render_template``::
@@ -161,31 +161,31 @@ Test ``render_template``::
     Traceback (most recent call last):
       ...
     ValueError: Expected kwargs missing: model, request.
-    
+
     >>> render_template('', model='foo')
     Traceback (most recent call last):
       ...
     ValueError: Expected kwargs missing: model, request.
-    
+
     >>> render_template('', request='foo')
     Traceback (most recent call last):
       ...
     ValueError: Expected kwargs missing: model, request.
-    
+
     >>> render_template('testdata/tile1.pt', model=model, request=request)
     Traceback (most recent call last):
       ...
     ValueError: Relative path not supported: testdata/tile1.pt
-    
+
     >>> render_template(
     ...     'cone.tile:testdata/tile1.pt', model=model, request=request)
     u'<span>Tile One</span>'
-    
+
     >>> request.environ['redirect'] = 'http://example.com/foo'
     >>> render_template(
     ...     'cone.tile:testdata/tile1.pt', model=model, request=request)
     u''
-    
+
     >>> del request.environ['redirect']
 
 Test ``render_template_to_response``::
@@ -195,37 +195,37 @@ Test ``render_template_to_response``::
     Traceback (most recent call last):
       ...
     ValueError: Expected kwargs missing: model, request.
-    
+
     >>> render_template_to_response('', model='foo')
     Traceback (most recent call last):
       ...
     ValueError: Expected kwargs missing: model, request.
-    
+
     >>> render_template_to_response('', request='foo')
     Traceback (most recent call last):
       ...
     ValueError: Expected kwargs missing: model, request.
-    
+
     >>> render_template_to_response(
     ...     'testdata/tile1.pt', model=model, request=request)
     Traceback (most recent call last):
       ...
     ValueError: Missing template asset: testdata/tile1.pt (...tile1.pt)
-    
+
     >>> render_template_to_response(
     ...     'cone.tile:testdata/tile1.pt', model=model, request=request)
     <Response at ... 200 OK>
-    
+
     >>> render_template_to_response(
     ...     'cone.tile:testdata/tmpl1.pt', model=model, request=request)
     <HTTPFound at ... 302 Found>
-    
+
     >>> del request.environ['redirect']
-    
+
     >>> render_template_to_response(
     ...     'cone.tile:testdata/tmpl2.pt', model=model, request=request)
     <HTTPFound at ... 302 Found>
-    
+
     >>> del request.environ['redirect']
 
 Test ``render_to_response``::
@@ -233,15 +233,15 @@ Test ``render_to_response``::
     >>> from cone.tile import render_to_response
     >>> render_to_response(request, 'foo')
     <Response at ... 200 OK>
-    
+
     >>> request.environ['redirect'] = 'http://example.com/foo'
     >>> render_to_response(request, 'foo')
     <HTTPFound at ... 302 Found>
-    
+
     >>> request.environ['redirect'] = HTTPFound(location='http://example.com')
     >>> render_to_response(request, 'foo')
     <HTTPFound at ... 302 Found>
-    
+
     >>> del request.environ['redirect']
 
 Check ``nodeurl``::
@@ -270,7 +270,7 @@ Define ACL for model::
     ...    (Allow, Everyone, ['login']),
     ...    (Deny, Everyone, ALL_PERMISSIONS),
     ... ]
-    
+
     >>> model.__acl__ = __acl__
 
 Authentication policy::
@@ -281,13 +281,13 @@ Authentication policy::
     ...     if name == 'editor_user':
     ...         return ['role:editor']
     ...     return []
-    
+
     >>> authn = CallbackAuthenticationPolicy()
     >>> authn.callback = groups_callback
     >>> registry.registerUtility(authn, IAuthenticationPolicy)
 
 Authorization policy::
-    
+
     >>> authz = ACLAuthorizationPolicy()
     >>> registry.registerUtility(authz, IAuthorizationPolicy)
 
@@ -301,7 +301,7 @@ Login permission protected tile can be rendered::
     ... class ProtectedLogin(Tile):
     ...     def render(self):
     ...         return u'permission login'
-    
+
     >>> render_tile(model, request, 'protected_login')
     u'permission login'
 
@@ -311,7 +311,7 @@ View permission protected tile rendering fails for anonymous::
     ... class ProtectedView(Tile):
     ...     def render(self):
     ...         return u'permission view'
-    
+
     >>> render_tile(model, request, 'protected_view')
     Traceback (most recent call last):
       ...
@@ -332,12 +332,12 @@ Authenticated users are allowed to view tiles protected by view permission::
     u'permission view'
 
 Edit permission protected tile rendering fails for authenticated::
-    
+
     >>> @tile('protected_edit', permission='edit')
     ... class ProtectedEdit(Tile):
     ...     def render(self):
     ...         return u'permission edit'
-    
+
     >>> render_tile(model, request, 'protected_edit')
     Traceback (most recent call last):
       ...
@@ -374,13 +374,13 @@ others::
 
     >>> render_tile(model, request, 'protected_delete')
     u'permission delete'
-    
+
     >>> render_tile(model, request, 'protected_edit')
     u'permission edit'
-    
+
     >>> render_tile(model, request, 'protected_view')
     u'permission view'
-    
+
     >>> render_tile(model, request, 'protected_login')
     u'permission login'
 
@@ -394,7 +394,7 @@ Override secured tile::
     u'permission delete override'
 
 If tile is registered non-strict, render_tile returns empty string::
-    
+
     >>> @tile('protected_unstrict', permission='delete', strict=False)
     ... class ProtectedUnstrict(Tile):
     ...     def render(self):
@@ -430,7 +430,7 @@ Some messages were logged::
     with name 'protected_delete'", 
     'Unauthorized: tile <ProtectedUnstrict object at ...> failed 
     permission check']
-    
+
 Log tile raising exception is called within a template::
 
     >>> logger.messages = []
@@ -457,14 +457,14 @@ Log tile raising exception is called within a template::
     <BLANKLINE>
     Exception: MockException
     <BLANKLINE>
-    
+
 Cleanup::
 
     >>> registry.unregisterUtility(logger, IDebugLogger)
     True
-    
+
     >>> registry.unregisterUtility(authn, IAuthenticationPolicy)
     True
-    
+
     >>> registry.unregisterUtility(authz, IAuthorizationPolicy)
     True
