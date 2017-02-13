@@ -156,7 +156,7 @@ def render_tile(model, request, name, catch_errors=True):
             logger = request.registry.getUtility(IDebugLogger)
             logger.debug(msg)
         return u"Tile with name '%s' not found:<br /><pre>%s</pre>" % \
-               (name, cgi.escape(str(e)))
+               (name, cgi.escape(str(e).decode('utf-8')))
 
 
 class TileRenderer(object):

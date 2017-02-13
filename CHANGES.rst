@@ -2,22 +2,30 @@
 Changelog
 =========
 
+0.9.3 (unreleased)
+------------------
+
+- Errors caught in ``render_tile`` may contain umlaute. Properly decode error
+  string.
+  [rnix, 2017-02-13]
+
+
 0.9.2
 -----
 
-- using and depending now on zope.exceptions to format tracebacks with
+- Using and depending now on zope.exceptions to format tracebacks with
   supplements.
   [jensens, 2012-06-06]
 
-- improved visibility of tracebacks, they appear now in the error log.
+- Improved visibility of tracebacks, they appear now in the error log.
   even if an expression like ```tal:replace="structure tile('editform')"```
   ate it, the traceback is logged. traceback supplements are rendered.
   [jensens, 2012-06-05]
 
-- removed superfluos try except
+- Removed superfluos try except
   [jensens, 2012-06-05]
 
-- fixed dependencies for integrated tests
+- Fixed dependencies for integrated tests
   [jensens, 2012-06-05]
 
 
