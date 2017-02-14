@@ -3,7 +3,7 @@ from setuptools import setup
 import os
 
 
-version = '0.9.3.dev0'
+version = '0.9.3'
 shortdesc = 'Provide parts of a web application as tiles.'
 longdesc = open(os.path.join(os.path.dirname(__file__), 'README.rst')).read()
 longdesc += open(os.path.join(os.path.dirname(__file__), 'CHANGES.rst')).read()

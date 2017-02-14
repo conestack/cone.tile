@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.9.3 (unreleased)
-------------------
+0.9.3
+-----
 
 - Errors caught in ``render_tile`` may contain umlaute. Properly decode error
   string.
