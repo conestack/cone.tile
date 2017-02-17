@@ -187,13 +187,55 @@ class TileRenderer(object):
 
 @implementer(ITile)
 class Tile(object):
+    """Tile class.
+    """
 
-    def __init__(self, path, attribute, name):
-        self.name = name
-        self.path = path
-        self.attribute = attribute
+    name = None
+    """Name of this tile as string.
+    """
+
+    path = None
+    """Path to template related to this tile as string. Expected in the form
+    ``packagename:template.pt``.
+    """
+
+    attribute = 'render'
+    """Name of function used to render this tile if no path set. Defaults to
+    ``render``
+    """
+
+    def __init__(self, path=None, attribute=None, name=None):
+        """Construct tile.
+
+        @param path: Path to template as string.
+        @param attribute: Name of function used to render this tile if no path
+        set. Defaults to ``render``.
+        @param name: Name of this tile as string.
+        """
+        if self.name is not None:
+            self.name = name
+        if path is not None:
+            self.path = path
+        if attribute is not None:
+            self.attribute = attribute
 
     def __call__(self, model, request):
+        """Render tile.
+
+        * Calls ``prepare`` function
+        * Check ``show`` flag and returns empty string if ``True``
+        * Check template ``path`` and renders template with tile as context
+          if set
+        * Looks up function on self by ``attribute`` name and use it for tile
+          rendering if no template path set.
+        * Check whether redirection has been triggered some when while
+          processing and return empty string if so, otherwide return rendered
+          result.
+
+        @param model: tile related model
+        @param request: pyramid request
+        @return string: rendered result
+        """
         self.model = model
         self.request = request
         self.prepare()
@@ -214,12 +256,19 @@ class Tile(object):
 
     @property
     def show(self):
+        """Flag whether this tile should be displayed. Defaults to ``True``
+        """
         return True
 
     def prepare(self):
+        """Function which can be used for preparation if desired before
+        rendering this tile. Does nothing by default.
+        """
         pass
 
     def render(self):
+        """Default rendering function for this tile if no template path set.
+        """
         raise NotImplementedError('Base Tile does not implement ``render``')
 
     def redirect(self, redirect):
@@ -277,35 +326,29 @@ def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
 
 
 # Registration
-def register_tile(
-    name=None,
-    path=None,
-    attribute='render',
-    interface=Interface,
-    class_=Tile,
-    permission='view',
-    strict=True,
-    _level=2):
-    """Register a tile.
+def register_tile(name=None, path=None, attribute=None, interface=Interface,
+                  class_=Tile, permission='view', strict=True, _level=2):
+    """Registers a tile.
 
     ``name``
-        identifier of the tile (for later lookup).
+        Identifier of the tile (for later lookup). If name is None, it is
+        taken from given tile class_. If name still None, an exception
+        is raised.
 
     ``path``
-        either relative path to the template or absolute path or path prefixed
+        Either relative path to the template or absolute path or path prefixed
         by the absolute package name delimeted by ':'. If ``path`` is used
         ``attribute`` is ignored.
 
     ``attribute``
-        attribute on the given _class to be used to render the tile. Defaults to
-        ``render``.
+        Function name on the given class_ to be used to render the tile.
 
     ``interface``
         Interface or Class of the pyramid model the tile is registered for.
 
     ``class_``
-        Class to be used to render the tile. usally ``cone.tile.Tile`` or a
-        subclass of. Promises to implement ``cone.tile.ITile``.
+        Class which implements ``cone.tile.ITile``. Normally ``cone.tile.Tile``
+        or subclass of it.
 
     ``permission``
         Enables security checking for this tile. Defaults to ``view``. If set to
@@ -320,9 +363,16 @@ def register_tile(
         is a bit special to make doctests pass the magic path-detection.
         you must never touch it in application code.
     """
+    if name is None:
+        name = class_.name
+    if name is None:
+        raise ValueError((
+            'Tile ``name`` must be either given at registration time '
+            'or set on given tile class: {}'
+        ).format(str(class_)))
     if path and not (':' in path or os.path.isabs(path)):
         path = '{}:{}'.format(caller_package(_level).__name__, path)
-    tile = class_(path, attribute, name)
+    tile = class_(path=path, attribute=attribute, name=name)
     registry = get_current_registry()
     registered = registry.adapters.registered
     unregister = registry.adapters.unregister
@@ -375,15 +425,9 @@ class tile(object):
     """
     venusian = venusian  # for testing injection
 
-    def __init__(
-        self,
-        name=None,
-        path=None,
-        attribute='render',
-        interface=Interface,
-        permission='view',
-        strict=True,
-        _level=2):
+    def __init__(self, name=None, path=None, attribute=None,
+                 interface=Interface, permission='view',
+                 strict=True, _level=2):
         """See ``register_tile`` for details on the other parameters.
         """
         self.name = name
@@ -396,15 +440,15 @@ class tile(object):
         self.strict = strict
 
     def __call__(self, ob):
-        kw = {
-            'name': self.name,
-            'path': self.path,
-            'attribute': self.attribute,
-            'interface': self.interface,
-            'class_': ob,
-            'permission': self.permission,
-            'strict': self.strict
-        }
+        kw = dict(
+            name=self.name,
+            path=self.path,
+            attribute=self.attribute,
+            interface=self.interface,
+            class_=ob,
+            permission=self.permission,
+            strict=self.strict
+        )
         def callback(context, name, ob):
             register_tile(**kw)
         self.venusian.attach(ob, callback, category='pyramid', depth=1)

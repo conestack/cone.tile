@@ -61,8 +61,24 @@ The Tile object. Normally not created directly, this is done due registration,
 see below::
 
     >>> mytile = Tile('cone.tile:testdata/tile1.pt', 'render', 'foo')
-    >>> mytile(model,  request)
+    >>> mytile(model, request)
     u'<span>Tile One</span>'
+
+Tile path and attribute can be set on subclass::
+
+    >>> class DirectPathTile(Tile):
+    ...     path = 'cone.tile:testdata/tile1.pt'
+
+    >>> DirectPathTile()(model, request)
+    u'<span>Tile One</span>'
+
+    >>> class DirectAttributeTile(Tile):
+    ...     attribute = 'custom_render'
+    ...     def custom_render(self):
+    ...         return u'<span>Direct Attribute</span>'
+
+    >>> DirectAttributeTile()(model, request)
+    u'<span>Direct Attribute</span>'
 
 Register a tile. When no object is given, the default Tile is instanciated.
 ``_level=1`` is needed for the doctest only to reduce the module level::
@@ -114,6 +130,25 @@ Now the decorator (ignore the ``_level``)::
 
     >>> render_tile(model, request, 'tiletwo')
     u'<span>Tile Two: <b><span>Tile One Override</span></b></span>\n<span>custom</span>'
+
+``name`` can be skipped when registering a tile given it it set on the tile
+class directly.::
+
+    >>> @tile()
+    ... class NameFromTile(Tile):
+    ...     name = 'name_from_tile'
+    ...     def render(self):
+    ...         return u'<span>Name from tile</span>'
+
+    >>> render_tile(model, request, 'name_from_tile')
+    u'<span>Name from tile</span>'
+
+    >>> @tile()
+    ... class NoTileNameTile(Tile): pass
+    Traceback (most recent call last):
+      ...
+    ValueError: Tile ``name`` must be either given at registration time or 
+    set on given tile class: <class 'NoTileNameTile'>
 
 Optional kw arg ``attribute`` can be given which is responsible to render the
 tile instead of defining a template. By default ``render`` is taken::

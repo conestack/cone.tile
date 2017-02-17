@@ -5,7 +5,29 @@ Changelog
 1.0 (unreleased)
 ----------------
 
+- Tile registration ``name`` is taken from ``Tile`` subclass if not given
+  in ``registerTile`` function and ``tile`` decorator.
+  [rnix, 2017-02-17]
+
+- ``name`` is now optional in ``registerTile`` function and ``tile`` decorator.
+  [rnix, 2017-02-17]
+
+- Default ``attribute`` is now ``None`` in ``registerTile`` function and
+  ``tile`` decorator to ensure considering ``attribute`` from ``Tile`` subclass
+  if set.
+  [rnix, 2017-02-17]
+
+- ``Tile.name``, ``Tile.path`` and ``Tile.attribute`` can be set on ``Tile``
+  subclass directly without being overwritten at tile registration if not
+  given.
+  [rnix, 2017-02-17]
+
+- Errors caught in ``render_tile`` may contain umlaute. Properly decode error
+  string.
+  [rnix, 2017-02-13]
+
 - ``tile`` decorator uses ``venusian`` to defer tile registration now.
+  [rnix, 2015-11-06]
 
 - Accept ``name`` as keyword instead of positional argument in
   ``register_tile`` and ``tile`` decorator.
@@ -20,14 +42,6 @@ Changelog
 - Remove useless test case due to this change.
   https://github.com/Pylons/pyramid/commit/4b552e539a1725356b9982261b73fd88de7d59a1#diff-bcda6948340ab38542fe18fd2365ac70R144
   [rnix, 2015-11-02]
-
-
-0.9.3
------
-
-- Errors caught in ``render_tile`` may contain umlaute. Properly decode error
-  string.
-  [rnix, 2017-02-13]
 
 
 0.9.2
