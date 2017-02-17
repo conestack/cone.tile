@@ -212,7 +212,7 @@ class Tile(object):
         set. Defaults to ``render``.
         @param name: Name of this tile as string.
         """
-        if self.name is not None:
+        if name is not None:
             self.name = name
         if path is not None:
             self.path = path
