@@ -5,7 +5,23 @@ Changelog
 0.9.4 (unreleased)
 ------------------
 
-- No changes yet.
+- Tile registration ``name`` is taken from ``Tile`` subclass if not given
+  in ``registerTile`` function and ``tile`` decorator.
+  [rnix, 2017-02-17]
+
+- ``name`` is now optional in ``registerTile`` function and ``tile`` decorator.
+  [rnix, 2017-02-17]
+
+- Default ``attribute`` is now ``None`` in ``registerTile`` function and
+  ``tile`` decorator to ensure considering ``attribute`` from ``Tile`` subclass
+  if set.
+  [rnix, 2017-02-17]
+
+- ``Tile.name``, ``Tile.path`` and ``Tile.attribute`` can be set on ``Tile``
+  subclass directly without being overwritten at tile registration if not
+  given.
+  [rnix, 2017-02-17]
+
 
 0.9.3
 -----
