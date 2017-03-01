@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.9.4 (unreleased)
-------------------
+0.9.4
+-----
 
 - Tile registration ``name`` is taken from ``Tile`` subclass if not given
   in ``registerTile`` function and ``tile`` decorator.
