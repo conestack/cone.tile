@@ -475,20 +475,22 @@ Some messages were logged::
 Log tile raising exception is called within a template::
 
     >>> logger.messages = []
-    >>> from cone.tile import _api
-    >>> _api.logger = logger
+
     >>> class TBSupplementMock(object):
     ...     def getInfo(self, as_html=0):
     ...         return '    - Mock Supplement Info'
+
     >>> class BugMock(object):
     ...     def __call__(self):
     ...         __traceback_supplement__ = (TBSupplementMock,)
     ...         raise Exception('MockException')
+
     >>> try:
     ...     render_template('cone.tile:testdata/tile_exc_bug.pt', 
     ...                     model=model, request=request, bugcall=BugMock())
-    ... except Exception, exc:
+    ... except Exception, e:
     ...     pass
+
     >>> print logger.messages[0]
     Error while rendering tile template.
     ...
@@ -498,7 +500,7 @@ Log tile raising exception is called within a template::
     <BLANKLINE>
     Exception: MockException
     <BLANKLINE>
-    
+
 Cleanup::
 
     >>> registry.unregisterUtility(logger, IDebugLogger)

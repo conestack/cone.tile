@@ -25,18 +25,9 @@ from zope.interface import Attribute
 from zope.interface import Interface
 from zope.interface import implementer
 import cgi
-import logging
 import os
 import sys
 import urllib
-
-
-logger = logging.getLogger('cone.tile')
-
-
-def log_exception(msg, exc, tb):
-    exc_str = '\n'.join(format_exception(exc.__class__, str(exc), tb))
-    logger.error('%s\n\n%s' % (msg, exc_str))
 
 
 class ITile(Interface):
@@ -86,9 +77,12 @@ def render_template(path, **kw):
     renderer = template_renderer_factory(info, ZPTTemplateRenderer)
     try:
         return renderer(kw, {})
-    except Exception, exc:
-        log_exception('Error while rendering tile template.', exc,
-                      sys.exc_traceback)
+    except Exception, e:
+        msg = 'Error while rendering tile template.\n{}'.format(
+            ''.join(format_exception(e.__class__, str(e), sys.exc_traceback))
+        )
+        logger = kw['request'].registry.getUtility(IDebugLogger)
+        logger.debug(msg)
         raise
 
 
