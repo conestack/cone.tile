@@ -5,6 +5,10 @@ Changelog
 1.0 (unreleased)
 ----------------
 
+- Remove ``log_exception`` utility and use registered ``IDebugLogger`` in
+  ``cone.tile._api.render_template`` for exception logging.
+  [rnix, 2017-03-24]
+
 - Tile registration ``name`` is taken from ``Tile`` subclass if not given
   in ``registerTile`` function and ``tile`` decorator.
   [rnix, 2017-02-17]

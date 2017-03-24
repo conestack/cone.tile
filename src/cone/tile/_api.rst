@@ -5,7 +5,6 @@ Test related imports::
 
     >>> from cone.tile import Tile
     >>> from cone.tile import TileRenderer
-    >>> from cone.tile import _api
     >>> from cone.tile import register_tile
     >>> from cone.tile import render_template
     >>> from cone.tile import render_template_to_response
@@ -489,19 +488,22 @@ Some messages were logged::
 Log tile raising exception is called within a template::
 
     >>> logger.messages = []
-    >>> _api.logger = logger
+
     >>> class TBSupplementMock(object):
     ...     def getInfo(self, as_html=0):
     ...         return '    - Mock Supplement Info'
+
     >>> class BugMock(object):
     ...     def __call__(self):
     ...         __traceback_supplement__ = (TBSupplementMock,)
     ...         raise Exception('MockException')
+
     >>> try:
     ...     render_template('cone.tile:testdata/tile_exc_bug.pt', 
     ...                     model=model, request=request, bugcall=BugMock())
-    ... except Exception, exc:
+    ... except Exception, e:
     ...     pass
+
     >>> print logger.messages[0]
     Error while rendering tile template.
     ...
