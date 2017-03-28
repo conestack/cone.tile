@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.9.5 (unreleased)
-------------------
+0.9.5
+-----
 
 - Remove ``log_exception`` utility and use registered ``IDebugLogger`` in
   ``cone.tile._api.render_template`` for exception logging.
