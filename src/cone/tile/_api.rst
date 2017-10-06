@@ -493,11 +493,11 @@ Log tile raising exception is called within a template::
 
     >>> print logger.messages[0]
     Error while rendering tile template.
-    ...
-      Module <doctest _api.rst[...]>, line ..., in __call__
+    Traceback (most recent call last):
+      ...
+      File "<doctest _api.rst[127]>", line ..., in __call__
         raise Exception('MockException')
         - Mock Supplement Info
-    <BLANKLINE>
     Exception: MockException
     <BLANKLINE>
 
