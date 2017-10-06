@@ -24,13 +24,13 @@ from pyramid.threadlocal import get_current_registry
 from webob import Response
 from webob.exc import HTTPFound
 from zope.component import ComponentLookupError
-from zope.exceptions.exceptionformatter import format_exception
 from zope.interface import Attribute
 from zope.interface import Interface
 from zope.interface import implementer
 import cgi
 import os
 import sys
+import traceback
 import urllib
 import venusian
 
@@ -82,8 +82,9 @@ def render_template(path, **kw):
     try:
         return renderer(kw, {})
     except Exception, e:
+        etype, value, tb = sys.exc_info()
         msg = 'Error while rendering tile template.\n{}'.format(
-            ''.join(format_exception(e.__class__, str(e), sys.exc_traceback))
+            ''.join(traceback.format_exception(etype, value, tb))
         )
         logger = kw['request'].registry.getUtility(IDebugLogger)
         logger.debug(msg)
