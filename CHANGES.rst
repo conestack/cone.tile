@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.9.6 (unreleased)
-------------------
+0.9.6
+-----
 
 - Use ``traceback`` module instead of ``zope.exceptions`` to format
   exceptions in ``render_template``.
