@@ -8,7 +8,7 @@ def read_file(name):
         return f.read()
 
 
-version = '0.9.6'
+version = '0.9.7.dev0'
 shortdesc = 'Provide parts of a web application as tiles.'
 longdesc = '\n\n'.join([read_file(name) for name in [
     'README.rst',
