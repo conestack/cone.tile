@@ -345,24 +345,19 @@ class TestTile(TileTestCase):
 
         self.assertEqual(render_tile(model, request, 'redirecttile'), u'')
 
+        http_found = request.environ['redirect']
+        self.assertTrue(isinstance(http_found, HTTPFound))
+        del request.environ['redirect']
+
+        register_tile(
+            name='redirecttiletwo',
+            path='testdata/tile3.pt'
+        )
+        self.assertEqual(render_tile(model, request, 'redirecttiletwo'), u'')
+        self.assertEqual(request.environ['redirect'], 'http://example.com/foo')
+        del request.environ['redirect']
+
 """
-    >>> request.environ['redirect']
-    <HTTPFound at ... 302 Found>
-
-    >>> del request.environ['redirect']
-
-    >>> register_tile(
-    ...     name='redirecttiletwo',
-    ...     path='testdata/tile3.pt',
-    ...     _level=1)
-    >>> render_tile(model, request, 'redirecttiletwo')
-    u''
-
-    >>> request.environ['redirect']
-    'http://example.com/foo'
-
-    >>> del request.environ['redirect']
-
 Test ``render_template``::
 
     >>> render_template('')
