@@ -61,19 +61,16 @@ class TileTestLayer(Layer):
 
     def setUp(self):
         tile.venusian = DummyVenusian()
-
         # Registry
         request = self.new_request()
         self.registry = request.registry
         self.registry.settings = {'debug_authorization': True}
-
         # Dummy logger
         self.logger = DummyLogger()
         self.registry.registerUtility(self.logger, IDebugLogger)
 
     def tearDown(self):
         tile.venusian = venusian
-
         self.registry.unregisterUtility(self.logger, IDebugLogger)
 
     def new_request(self):
@@ -311,7 +308,6 @@ class TestTile(TileTestCase):
         # is taken
         @tile(name='attrtile')
         class TileDefaultRenderAttr(Tile):
-
             def render(self):
                 return u'<h1>Rendered via attribute call</h1>'
 
@@ -322,7 +318,6 @@ class TestTile(TileTestCase):
 
         @tile(name='foobarattrtile', attribute='foobar')
         class TileFoobarRenderAttr(Tile):
-
             def foobar(self):
                 return u'<h1>Rendered via attribute foobar call</h1>'
 
@@ -365,7 +360,6 @@ class TestTile(TileTestCase):
 
         @tile(name='redirecttile')
         class RedirectTile(Tile):
-
             def render(self):
                 self.redirect(HTTPFound(location='http://example.com'))
 
@@ -687,76 +681,40 @@ class TestTile(TileTestCase):
         )
         self.assertEqual(str(err), 'Tile is not willing to perform')
 
-"""
+    def test_traceback_supplement(self):
+        self.layer.logger.clear()
 
-Log tile raising exception is called within a template::
+        class TBSupplementMock(object):
+            def getInfo(self, as_html=0):
+                return '    - Mock Supplement Info'
 
-    >>> logger.messages = []
+        class BugMock(object):
+            def __call__(self):
+                __traceback_supplement__ = (TBSupplementMock,)
+                raise Exception('MockException')
 
-    >>> class TBSupplementMock(object):
-    ...     def getInfo(self, as_html=0):
-    ...         return '    - Mock Supplement Info'
+        try:
+            model = Model()
+            request = self.layer.new_request()
+            render_template(
+                'cone.tile:testdata/tile_exc_bug.pt',
+                model=model,
+                request=request,
+                bugcall=BugMock()
+            )
+        except Exception:
+            pass
 
-    >>> class BugMock(object):
-    ...     def __call__(self):
-    ...         __traceback_supplement__ = (TBSupplementMock,)
-    ...         raise Exception('MockException')
+        self.checkOutput("""
+        Error while rendering tile template.
+        Traceback (most recent call last):
+          File "..._api.py", line ..., in render_template
+            ...
+            raise Exception('MockException')
+            - Mock Supplement Info
+        Exception: MockException
+        """, self.layer.logger.messages[0])
 
-    >>> try:
-    ...     render_template('cone.tile:testdata/tile_exc_bug.pt', 
-    ...                     model=model, request=request, bugcall=BugMock())
-    ... except Exception, e:
-    ...     pass
-
-    >>> print logger.messages[0]
-    Error while rendering tile template.
-    Traceback (most recent call last):
-      ...
-      File "<doctest _api.rst[...]>", line ..., in __call__
-        raise Exception('MockException')
-        - Mock Supplement Info
-    Exception: MockException
-    <BLANKLINE>
-
-Cleanup::
-
-    >>> tile.venusian = venusian
-
-    >>> registry.unregisterUtility(logger, IDebugLogger)
-    True
-
-    >>> registry.unregisterUtility(authn, IAuthenticationPolicy)
-    True
-
-    >>> registry.unregisterUtility(authz, IAuthorizationPolicy)
-    True
-
-"""
-
-"""
-from interlude import interact
-from pprint import pprint
-import doctest
-import unittest
-
-optionflags = doctest.NORMALIZE_WHITESPACE | \
-              doctest.ELLIPSIS | \
-              doctest.REPORT_ONLY_FIRST_FAILURE
-
-TESTFILES = [
-    '_api.rst',
-]
-
-def test_suite():
-    return unittest.TestSuite([
-        doctest.DocFileSuite(
-            file, 
-            optionflags=optionflags,
-            globs={'interact': interact,
-                   'pprint': pprint},
-        ) for file in TESTFILES
-    ])
-"""
 
 if __name__ == '__main__':
     unittest.main()
