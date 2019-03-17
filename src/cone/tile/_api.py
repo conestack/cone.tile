@@ -81,7 +81,7 @@ def render_template(path, **kw):
     renderer = template_renderer_factory(info, ZPTTemplateRenderer)
     try:
         return renderer(kw, {})
-    except Exception, e:
+    except Exception:
         etype, value, tb = sys.exc_info()
         msg = 'Error while rendering tile template.\n{}'.format(
             ''.join(traceback.format_exception(etype, value, tb))
@@ -294,6 +294,7 @@ def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
         def _permitted(context, request):
             principals = authn_policy.effective_principals(request)
             return authz_policy.permits(context, principals, permission)
+
         def _secured_tile(context, request):
             result = _permitted(context, request)
             if result:
@@ -346,7 +347,7 @@ def register_tile(name=None, path=None, attribute=None, interface=Interface,
     ``permission``
         Enables security checking for this tile. Defaults to ``view``. If set to
         ``None`` security checks are disabled.
-    
+
     ``strict``
         Wether to raise ``Forbidden`` or not. Defaults to ``True``. If set to
         ``False`` the exception is consumed and an empty unicode string is
@@ -442,6 +443,7 @@ class tile(object):
             permission=self.permission,
             strict=self.strict
         )
+
         def callback(context, name, ob):
             register_tile(**kw)
         self.venusian.attach(ob, callback, category='pyramid', depth=1)
