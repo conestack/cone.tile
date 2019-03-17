@@ -205,6 +205,9 @@ class TestTile(TileTestCase):
             u'<span>Tile One Override</span>'
         )
 
+        # Reset overwritten tile
+        register_tile(name='tileone', path='testdata/tile1.pt')
+
     def test_inexistent_tile(self):
         model = Model()
         request = self.layer.request
@@ -230,9 +233,6 @@ class TestTile(TileTestCase):
     def test_tile_decorator(self):
         model = Model()
         request = self.layer.request
-
-        # Ensure correct nested tile
-        register_tile(name='tileone', path='testdata/tile1.pt')
 
         @tile(name='tiletwo', path='testdata/tile2.pt')
         class TileTwo(Tile):
@@ -323,22 +323,26 @@ class TestTile(TileTestCase):
             show = 0
 
         self.assertEqual(render_tile(model, request, 'notshowtile'), u'')
+
+    def test_redirect(self):
+        # Tile provides a redirect function which excepts either a string
+        # containing the URL to redirect to or a HTTPFound instance.
+
+        # This function sets request.environ['redirect'] with given value. It
+        # is considered in ``render_template``, ``render_template_to_response``
+        # and ``render_to_response``
+        model = Model()
+        request = self.layer.request
+
+        @tile(name='redirecttile')
+        class RedirectTile(Tile):
+
+            def render(self):
+                self.redirect(HTTPFound(location='http://example.com'))
+
+        self.assertEqual(render_tile(model, request, 'redirecttile'), u'')
+
 """
-Tile provides a redirect function which excepts either a string containing
-The URL to redirect to or a HTTPFound instance.
-
-This function sets request.environ['redirect'] with given value. It is
-considered in ``render_template``,  ``render_template_to_response`` and
-``render_to_response``::
-
-    >>> @tile(name='redirecttile')
-    ... class RedirectTile(Tile):
-    ...     def render(self):
-    ...         self.redirect(HTTPFound(location='http://example.com'))
-
-    >>> render_tile(model, request, 'redirecttile')
-    u''
-
     >>> request.environ['redirect']
     <HTTPFound at ... 302 Found>
 
