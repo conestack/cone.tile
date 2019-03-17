@@ -38,6 +38,9 @@ class DummyVenusian(object):
 class DummyLogger(object):
 
     def __init__(self):
+        self.clear()
+
+    def clear(self):
         self.messages = []
 
     def info(self, msg):
@@ -208,11 +211,27 @@ class TestTile(TileTestCase):
         )
 
         # Reset overwritten tile
+        self.layer.logger.clear()
+
         register_tile(name='tileone', path='testdata/tile1.pt')
+
+        self.checkOutput("""
+        Unregister secured view for '<InterfaceClass zope.interface.Interface>'
+        with name 'tileone'
+        """, self.layer.logger.messages[0])
+
+        self.checkOutput("""
+        Unregister tile for '<InterfaceClass zope.interface.Interface>'
+        with name 'tileone'
+        """, self.layer.logger.messages[1])
+
+        self.layer.logger.clear()
 
     def test_inexistent_tile(self):
         model = Model()
         request = self.layer.new_request()
+
+        self.layer.logger.clear()
 
         # By default, render error message if tile ComponentLookupError
         self.checkOutput("""
@@ -220,6 +239,14 @@ class TestTile(TileTestCase):
         instance at ...&gt;, &lt;pyramid.testing.DummyRequest object at ...&gt;),
         &lt;InterfaceClass cone.tile._api.ITile&gt;, 'inexistent')</pre>
         """, render_tile(model, request, 'inexistent'))
+
+        self.checkOutput("""
+        Error in rendering_tile: ((<cone.tile.tests.Model instance at ...>,
+        <pyramid.testing.DummyRequest object at ...>),
+        <InterfaceClass cone.tile._api.ITile>, 'inexistent')
+        """, self.layer.logger.messages[0])
+
+        self.layer.logger.clear()
 
         # To change the above behavior, the ``catch_errors`` argument can be
         # changed to ``False``, thus preventing error swallowing
@@ -633,7 +660,17 @@ class TestTile(TileTestCase):
                 return u'unstrict'
 
         authn.unauthenticated_userid = lambda *args: None
+
+        self.layer.logger.clear()
+
         self.assertEqual(render_tile(model, request, 'protected_unstrict'), u'')
+
+        self.checkOutput("""
+        Unauthorized: tile <cone.tile.tests.ProtectedUnstrict object at ...>
+        failed permission check
+        """, self.layer.logger.messages[0])
+
+        self.layer.logger.clear()
 
         # If an error occours in tile, do not swallow error
         @tile(name='raisingtile', permission='login')
@@ -651,22 +688,6 @@ class TestTile(TileTestCase):
         self.assertEqual(str(err), 'Tile is not willing to perform')
 
 """
-Some messages were logged::
-
-    >>> logger.messages
-    [u"Unregister secured view for 
-    '<InterfaceClass zope.interface.Interface>' with name 'tileone'", 
-    u"Unregister tile for 
-    '<InterfaceClass zope.interface.Interface>' with name 'tileone'", 
-    u"Error in rendering_tile: ((<__builtin__.Model instance at ...>, 
-    <pyramid.testing.DummyRequest object at ...>), 
-    <InterfaceClass cone.tile._api.ITile>, 'inexistent')", 
-    u"Unregister secured view for '<InterfaceClass zope.interface.Interface>' 
-    with name 'protected_delete'", 
-    u"Unregister tile for '<InterfaceClass zope.interface.Interface>' 
-    with name 'protected_delete'", 
-    'Unauthorized: tile <ProtectedUnstrict object at ...> failed 
-    permission check']
 
 Log tile raising exception is called within a template::
 
