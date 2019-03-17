@@ -259,54 +259,71 @@ class TestTile(TileTestCase):
             render_tile(model, request, 'name_from_tile'),
             u'<span>Name from tile</span>'
         )
+
+        # Missing tile name
+        try:
+            @tile()
+            class NoTileNameTile(Tile):
+                pass
+
+            raise Exception('Missing tile name test expected to fail')
+        except ValueError as e:
+            self.assertEqual(
+                str(e),
+                (
+                    "Tile ``name`` must be either given at registration time "
+                    "or set on given tile class: "
+                    "<class 'cone.tile.tests.NoTileNameTile'>"
+                )
+            )
+
+        # Optional kw arg ``attribute`` can be given which is responsible to
+        # render the tile instead of defining a template. By default ``render``
+        # is taken
+        @tile(name='attrtile')
+        class TileDefaultRenderAttr(Tile):
+
+            def render(self):
+                return u'<h1>Rendered via attribute call</h1>'
+
+        self.assertEqual(
+            render_tile(model, request, 'attrtile'),
+            u'<h1>Rendered via attribute call</h1>'
+        )
+
+        @tile(name='foobarattrtile', attribute='foobar')
+        class TileFoobarRenderAttr(Tile):
+
+            def foobar(self):
+                return u'<h1>Rendered via attribute foobar call</h1>'
+
+        self.assertEqual(
+            render_tile(model, request, 'foobarattrtile'),
+            u'<h1>Rendered via attribute foobar call</h1>'
+        )
+
+        # Default ``render`` raises NotImplementedError
+        @tile(name='norender')
+        class NotImplementedTile(Tile):
+            pass
+
+        err = self.expectError(
+            NotImplementedError,
+            render_tile,
+            model,
+            request,
+            'norender'
+        )
+        self.assertEqual(str(err), "Base Tile does not implement ``render``")
+
+        # Tile check for ``show`` attribute and returns empty string if it
+        # evaluates to False
+        @tile(name='notshowtile')
+        class TileNotShown(Tile):
+            show = 0
+
+        self.assertEqual(render_tile(model, request, 'notshowtile'), u'')
 """
-    >>> @tile()
-    ... class NoTileNameTile(Tile): pass
-    Traceback (most recent call last):
-      ...
-    ValueError: Tile ``name`` must be either given at registration time or 
-    set on given tile class: <class 'NoTileNameTile'>
-
-Optional kw arg ``attribute`` can be given which is responsible to render the
-tile instead of defining a template. By default ``render`` is taken::
-
-    >>> @tile(name='attrtile')
-    ... class TileDefaultRenderAttr(Tile):
-    ...     def render(self):
-    ...         return u'<h1>Rendered via attribute call</h1>'
-
-    >>> render_tile(model, request, 'attrtile')
-    u'<h1>Rendered via attribute call</h1>'
-
-    >>> @tile(name='foobarattrtile', attribute='foobar')
-    ... class TileFoobarRenderAttr(Tile):
-    ...     def foobar(self):
-    ...         return u'<h1>Rendered via attribute foobar call</h1>'
-
-    >>> render_tile(model, request, 'foobarattrtile')
-    u'<h1>Rendered via attribute foobar call</h1>'
-
-Default ``render`` raises NotImplementedError::
-
-    >>> @tile(name='norender')
-    ... class NotImplementedTile(Tile):
-    ...     pass
-
-    >>> render_tile(model, request, 'norender')
-    Traceback (most recent call last):
-      ...
-    NotImplementedError: Base Tile does not implement ``render``
-
-Tile check for ``show`` attribute and returns empty string if it evaluates to
-False::
-
-    >>> @tile(name='notshowtile')
-    ... class TileDefaultRenderAttr(Tile):
-    ...     show = 0
-
-    >>> render_tile(model, request, 'notshowtile')
-    u''
-
 Tile provides a redirect function which excepts either a string containing
 The URL to redirect to or a HTTPFound instance.
 
