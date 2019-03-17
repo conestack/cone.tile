@@ -19,6 +19,7 @@ from pyramid.security import Deny
 from pyramid.security import Everyone
 from pyramid.security import view_execution_permitted
 from webob.exc import HTTPFound
+from zope.component import ComponentLookupError
 import doctest
 import unittest
 import venusian
@@ -186,59 +187,79 @@ class TestTile(TileTestCase):
         # Render registered tile - first how it works in templates
         tilerenderer = TileRenderer(model, request)
         self.assertEqual(tilerenderer('tileone'), u'<span>Tile One</span>')
+
+        # For simplification in Python code the same can be achieved by
+        self.assertEqual(
+            render_tile(model, request, 'tileone'),
+            u'<span>Tile One</span>'
+        )
+
+    def test_override_tile(self):
+        model = Model()
+        request = self.layer.request
+
+        # Override tile
+        register_tile(name='tileone', path='testdata/tile1_override.pt')
+        self.assertEqual(
+            render_tile(model, request, 'tileone'),
+            u'<span>Tile One Override</span>'
+        )
+
+    def test_inexistent_tile(self):
+        model = Model()
+        request = self.layer.request
+
+        # By default, render error message if tile ComponentLookupError
+        self.checkOutput("""
+        Tile with name 'inexistent' not found:<br /><pre>((&lt;cone.tile.tests.Model
+        instance at ...&gt;, &lt;pyramid.testing.DummyRequest object at ...&gt;),
+        &lt;InterfaceClass cone.tile._api.ITile&gt;, 'inexistent')</pre>
+        """, render_tile(model, request, 'inexistent'))
+
+        # To change the above behavior, the ``catch_errors`` argument can be
+        # changed to ``False``, thus preventing error swallowing
+        self.expectError(
+            ComponentLookupError,
+            render_tile,
+            model,
+            request,
+            'inexistent',
+            catch_errors=False
+        )
+
+    def test_tile_decorator(self):
+        model = Model()
+        request = self.layer.request
+
+        # Ensure correct nested tile
+        register_tile(name='tileone', path='testdata/tile1.pt')
+
+        @tile(name='tiletwo', path='testdata/tile2.pt')
+        class TileTwo(Tile):
+            data = u'custom'
+
+        self.assertEqual(
+            render_tile(model, request, 'tiletwo'),
+            (
+                u'<span>Tile Two: <b><span>Tile One</span></b>'
+                u'</span>\n<span>custom</span>'
+            )
+        )
+
+        # ``name`` can be skipped when registering a tile given it it set on
+        # the tile class directly
+        @tile()
+        class NameFromTile(Tile):
+            name = 'name_from_tile'
+
+            def render(self):
+                return u'<span>Name from tile</span>'
+
+        self.assertEqual(
+            render_tile(model, request, 'name_from_tile'),
+            u'<span>Name from tile</span>'
+        )
 """
-For simplification in Python code the same can be achieved by::
-
-    >>> render_tile(model, request, 'tileone')
-    u'<span>Tile One</span>'
-
-Override tile::
-
-    >>> register_tile(
-    ...     name='tileone',
-    ...     path='testdata/tile1_override.pt',
-    ...     _level=1)
-    >>> render_tile(model, request, 'tileone')
-    u'<span>Tile One Override</span>'
-
-By default, render error message if tile ComponentLookupError::
-
-    >>> render_tile(model, request, 'inexistent')
-    u"Tile with name 'inexistent' not found:<br /><pre>((&lt;__builtin__.Model 
-    instance at ...&gt;, &lt;pyramid.testing.DummyRequest object at ...&gt;), 
-    &lt;InterfaceClass cone.tile._api.ITile&gt;, 'inexistent')</pre>"
-
-To change the above behavior, the ``catch_errors`` argument can be changed to
-``False``, thus preventing error swallowing::
-
-    >>> render_tile(model, request, 'inexistent', catch_errors=False)
-    Traceback (most recent call last):
-      ...
-    ComponentLookupError: ((<__builtin__.Model instance at ...>,
-    <pyramid.testing.DummyRequest object at ...>), <InterfaceClass
-    cone.tile._api.ITile>, 'inexistent')
-
-Now the decorator (ignore the ``_level``)::
-
-    >>> @tile(name='tiletwo', path='testdata/tile2.pt', _level=1)
-    ... class TileTwo(Tile):
-    ...     data = u'custom'
-
-    >>> render_tile(model, request, 'tiletwo')
-    u'<span>Tile Two: <b><span>Tile One Override</span></b></span>\n<span>custom</span>'
-
-``name`` can be skipped when registering a tile given it it set on the tile
-class directly.::
-
-    >>> @tile()
-    ... class NameFromTile(Tile):
-    ...     name = 'name_from_tile'
-    ...     def render(self):
-    ...         return u'<span>Name from tile</span>'
-
-    >>> render_tile(model, request, 'name_from_tile')
-    u'<span>Name from tile</span>'
-
     >>> @tile()
     ... class NoTileNameTile(Tile): pass
     Traceback (most recent call last):
