@@ -86,9 +86,9 @@ class TileTestLayer(Layer):
         tile.venusian = DummyVenusian()
 
         # Registry
-        self.request = testing.DummyRequest()
-        self.request.registry.settings = {'debug_authorization': True}
-        self.registry = self.request.registry
+        request = self.new_request()
+        self.registry = request.registry
+        self.registry.settings = {'debug_authorization': True}
 
         # Dummy logger
         self.logger = DummyLogger()
@@ -98,6 +98,9 @@ class TileTestLayer(Layer):
         tile.venusian = venusian
 
         self.registry.unregisterUtility(self.logger, IDebugLogger)
+
+    def new_request(self):
+        return testing.DummyRequest()
 
     def secured(self):
         return Secured(self.registry)
@@ -149,7 +152,7 @@ class TestTile(TileTestCase):
 
     def test_Tile(self):
         model = Model()
-        request = self.layer.request
+        request = self.layer.new_request()
 
         # The Tile object. Normally not created directly, this is done due
         # registration
@@ -178,7 +181,7 @@ class TestTile(TileTestCase):
 
     def test_register_tile(self):
         model = Model()
-        request = self.layer.request
+        request = self.layer.new_request()
 
         # Register a tile. When no object is given, the default Tile is
         # instanciated.
@@ -196,7 +199,7 @@ class TestTile(TileTestCase):
 
     def test_override_tile(self):
         model = Model()
-        request = self.layer.request
+        request = self.layer.new_request()
 
         # Override tile
         register_tile(name='tileone', path='testdata/tile1_override.pt')
@@ -210,7 +213,7 @@ class TestTile(TileTestCase):
 
     def test_inexistent_tile(self):
         model = Model()
-        request = self.layer.request
+        request = self.layer.new_request()
 
         # By default, render error message if tile ComponentLookupError
         self.checkOutput("""
@@ -232,7 +235,7 @@ class TestTile(TileTestCase):
 
     def test_tile_decorator(self):
         model = Model()
-        request = self.layer.request
+        request = self.layer.new_request()
 
         @tile(name='tiletwo', path='testdata/tile2.pt')
         class TileTwo(Tile):
@@ -332,7 +335,7 @@ class TestTile(TileTestCase):
         # is considered in ``render_template``, ``render_template_to_response``
         # and ``render_to_response``
         model = Model()
-        request = self.layer.request
+        request = self.layer.new_request()
 
         @tile(name='redirecttile')
         class RedirectTile(Tile):
