@@ -10,10 +10,12 @@ from plone.testing import Layer
 from pyramid import testing
 from pyramid.authentication import CallbackAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
+from pyramid.httpexceptions import HTTPForbidden
 from pyramid.interfaces import IAuthenticationPolicy
 from pyramid.interfaces import IAuthorizationPolicy
 from pyramid.interfaces import IDebugLogger
 from pyramid.security import ALL_PERMISSIONS
+from pyramid.security import ACLDenied
 from pyramid.security import Allow
 from pyramid.security import Deny
 from pyramid.security import Everyone
@@ -52,35 +54,6 @@ class Model(testing.DummyResource):
     path = [None]
 
 
-class Secured(object):
-
-    def __init__(self, registry):
-        self.registry = registry
-
-    def __enter__(self):
-        # Authentication policy
-        def groups_callback(name, request):
-            if name == 'admin_user':
-                return ['role:manager']
-            if name == 'editor_user':
-                return ['role:editor']
-            return []
-
-        self.authn = CallbackAuthenticationPolicy()
-        self.authn.callback = groups_callback
-        # Expected by pyramid.authentication.effective_principals
-        self.authn.unauthenticated_userid = lambda *args: None
-        self.registry.registerUtility(self.authn, IAuthenticationPolicy)
-
-        # Authorization policy
-        self.authz = ACLAuthorizationPolicy()
-        self.registry.registerUtility(self.authz, IAuthorizationPolicy)
-
-    def __exit__(self, *exc):
-        self.registry.unregisterUtility(self.authn, IAuthenticationPolicy)
-        self.registry.unregisterUtility(self.authz, IAuthorizationPolicy)
-
-
 class TileTestLayer(Layer):
 
     def setUp(self):
@@ -102,9 +75,6 @@ class TileTestLayer(Layer):
 
     def new_request(self):
         return testing.DummyRequest()
-
-    def secured(self):
-        return Secured(self.registry)
 
 
 class Example(object):
@@ -135,7 +105,7 @@ class TileTestCase(unittest.TestCase):
             return e
         else:
             msg = 'Expected \'{}\' when calling \'{}\''.format(exc, func)
-            raise Exception(msg)
+            raise Failure(msg)
 
     def checkOutput(self, want, got, optionflags=None):
         if optionflags is None:
@@ -146,6 +116,34 @@ class TileTestCase(unittest.TestCase):
                 Example(want),
                 got, optionflags
             ))
+
+
+def secured(func):
+    def wrapped(self):
+        registry = self.layer.registry
+
+        # Authentication policy
+        def groups_callback(name, request):
+            if name == 'admin_user':
+                return ['role:manager']
+            if name == 'editor_user':
+                return ['role:editor']
+            return []
+
+        authn = CallbackAuthenticationPolicy()
+        authn.callback = groups_callback
+        registry.registerUtility(authn, IAuthenticationPolicy)
+
+        # Authorization policy
+        authz = ACLAuthorizationPolicy()
+        registry.registerUtility(authz, IAuthorizationPolicy)
+
+        try:
+            func(self, authn)
+        finally:
+            registry.unregisterUtility(authn, IAuthenticationPolicy)
+            registry.unregisterUtility(authz, IAuthorizationPolicy)
+    return wrapped
 
 
 class TestTile(TileTestCase):
@@ -500,161 +498,159 @@ class TestTile(TileTestCase):
             u'<span>http://example.com</span>\n'
         )
 
+    @secured
+    def test_secured(self, authn):
+        @tile(name='protected_login', permission='login')
+        class ProtectedLogin(Tile):
+            def render(self):
+                return u'permission login'
+
+        @tile(name='protected_view', permission='view')
+        class ProtectedView(Tile):
+            def render(self):
+                return u'permission view'
+
+        @tile(name='protected_edit', permission='edit')
+        class ProtectedEdit(Tile):
+            def render(self):
+                return u'permission edit'
+
+        @tile(name='protected_delete', permission='delete')
+        class ProtectedDelete(Tile):
+            def render(self):
+                return u'permission delete'
+
+        model = Model()
+        request = self.layer.new_request()
+
+        # Define ACL for model
+        model.__acl__ = [
+            (Allow, 'system.Authenticated', ['view']),
+            (Allow, 'role:editor', ['view', 'edit']),
+            (Allow, 'role:manager', ['view', 'edit', 'delete']),
+            (Allow, Everyone, ['login']),
+            (Deny, Everyone, ALL_PERMISSIONS),
+        ]
+
+        # No authenticated user
+        authn.unauthenticated_userid = lambda *args: None
+
+        # Login permission protected tile can be rendered
+        self.assertEqual(
+            render_tile(model, request, 'protected_login'),
+            u'permission login'
+        )
+
+        # View permission protected tile rendering fails for anonymous
+        err = self.expectError(
+            HTTPForbidden,
+            render_tile,
+            model,
+            request,
+            'protected_view'
+        )
+        self.assertTrue(str(err).find('failed permission check') > -1)
+
+        rule = view_execution_permitted(model, request, name='protected_view')
+        self.assertTrue(isinstance(rule, ACLDenied))
+
+        # Set authenticated to 'max'
+        authn.unauthenticated_userid = lambda *args: 'max'
+
+        # Authenticated users are allowed to view tiles protected by view
+        # permission
+        self.assertEqual(
+            render_tile(model, request, 'protected_view'),
+            u'permission view'
+        )
+
+        # Edit permission protected tile rendering fails for authenticated
+        err = self.expectError(
+            HTTPForbidden,
+            render_tile,
+            model,
+            request,
+            'protected_edit'
+        )
+        self.assertTrue(str(err).find('failed permission check') > -1)
+
+        # Set authenticated to 'editor_user'
+        authn.unauthenticated_userid = lambda *args: 'editor_user'
+
+        # Editor is allowed to render edit permission protected tiles
+        self.assertEqual(
+            render_tile(model, request, 'protected_edit'),
+            u'permission edit'
+        )
+
+        # Delete permission protected tile rendering fails for editor
+        err = self.expectError(
+            HTTPForbidden,
+            render_tile,
+            model,
+            request,
+            'protected_delete'
+        )
+        self.assertTrue(str(err).find('failed permission check') > -1)
+
+        # Set User to 'admin_user'
+        authn.unauthenticated_userid = lambda *args: 'admin_user'
+
+        # Admin users are allowed to render delete permission protected tiles
+        # and others
+        self.assertEqual(
+            render_tile(model, request, 'protected_delete'),
+            u'permission delete'
+        )
+        self.assertEqual(
+            render_tile(model, request, 'protected_edit'),
+            u'permission edit'
+        )
+        self.assertEqual(
+            render_tile(model, request, 'protected_view'),
+            u'permission view'
+        )
+        self.assertEqual(
+            render_tile(model, request, 'protected_login'),
+            u'permission login'
+        )
+
+        # Override secured tile
+        @tile(name='protected_delete', permission='delete')
+        class ProtectedDeleteOverride(Tile):
+            def render(self):
+                return u'permission delete override'
+
+        self.assertEqual(
+            render_tile(model, request, 'protected_delete'),
+            u'permission delete override'
+        )
+
+        # If tile is registered non-strict, render_tile returns empty string
+        @tile(name='protected_unstrict', permission='delete', strict=False)
+        class ProtectedUnstrict(Tile):
+            def render(self):
+                return u'unstrict'
+
+        authn.unauthenticated_userid = lambda *args: None
+        self.assertEqual(render_tile(model, request, 'protected_unstrict'), u'')
+
+        # If an error occours in tile, do not swallow error
+        @tile(name='raisingtile', permission='login')
+        class RaisingTile(Tile):
+            def render(self):
+                raise Exception(u'Tile is not willing to perform')
+
+        err = self.expectError(
+            Exception,
+            render_tile,
+            model,
+            request,
+            'raisingtile'
+        )
+        self.assertEqual(str(err), 'Tile is not willing to perform')
+
 """
-Check tile securing.
-
-Define ACL for model::
-
-    >>> __acl__ = [
-    ...    (Allow, 'system.Authenticated', ['view']),
-    ...    (Allow, 'role:editor', ['view', 'edit']),
-    ...    (Allow, 'role:manager', ['view', 'edit', 'delete']),
-    ...    (Allow, Everyone, ['login']),
-    ...    (Deny, Everyone, ALL_PERMISSIONS),
-    ... ]
-
-    >>> model.__acl__ = __acl__
-
-Authentication policy::
-
-    >>> def groups_callback(name, request):
-    ...     if name == 'admin_user':
-    ...         return ['role:manager']
-    ...     if name == 'editor_user':
-    ...         return ['role:editor']
-    ...     return []
-
-    >>> authn = CallbackAuthenticationPolicy()
-    >>> authn.callback = groups_callback
-    >>> registry.registerUtility(authn, IAuthenticationPolicy)
-
-Authorization policy::
-
-    >>> authz = ACLAuthorizationPolicy()
-    >>> registry.registerUtility(authz, IAuthorizationPolicy)
-
-No authenticated user::
-
-    >>> authn.unauthenticated_userid = lambda *args: None
-
-Login permission protected tile can be rendered::
-
-    >>> @tile(name='protected_login', permission='login')
-    ... class ProtectedLogin(Tile):
-    ...     def render(self):
-    ...         return u'permission login'
-
-    >>> render_tile(model, request, 'protected_login')
-    u'permission login'
-
-View permission protected tile rendering fails for anonymous::
-
-    >>> @tile(name='protected_view', permission='view')
-    ... class ProtectedView(Tile):
-    ...     def render(self):
-    ...         return u'permission view'
-
-    >>> render_tile(model, request, 'protected_view')
-    Traceback (most recent call last):
-      ...
-    HTTPForbidden: Unauthorized: tile <ProtectedView object at ...> failed 
-    permission check
-
-    >>> view_execution_permitted(model, request, name='protected_view')
-    <ACLDenied instance ...
-
-Set authenticated to 'max'::
-
-    >>> authn.unauthenticated_userid = lambda *args: 'max'
-
-Authenticated users are allowed to view tiles protected by view permission::
-
-    >>> render_tile(model, request, 'protected_view')
-    u'permission view'
-
-Edit permission protected tile rendering fails for authenticated::
-
-    >>> @tile(name='protected_edit', permission='edit')
-    ... class ProtectedEdit(Tile):
-    ...     def render(self):
-    ...         return u'permission edit'
-
-    >>> render_tile(model, request, 'protected_edit')
-    Traceback (most recent call last):
-      ...
-    HTTPForbidden: Unauthorized: tile <ProtectedEdit object at ...> failed 
-    permission check
-
-Set authenticated to 'editor_user'::
-
-    >>> authn.unauthenticated_userid = lambda *args: 'editor_user'
-
-Editor is allowed to render edit permission protected tiles::
-
-    >>> render_tile(model, request, 'protected_edit')
-    u'permission edit'
-
-Delete permission protected tile rendering fails for editor::
-
-    >>> @tile(name='protected_delete', permission='delete')
-    ... class ProtectedDelete(Tile):
-    ...     def render(self):
-    ...         return u'permission delete'
-    >>> render_tile(model, request, 'protected_delete')
-    Traceback (most recent call last):
-      ...
-    HTTPForbidden: Unauthorized: tile <ProtectedDelete object at ...> failed 
-    permission check
-
-Set User to 'admin_user'::
-
-    >>> authn.unauthenticated_userid = lambda *args: 'admin_user'
-
-Admin users are allowed to render delete permission protected tiles and
-others::
-
-    >>> render_tile(model, request, 'protected_delete')
-    u'permission delete'
-
-    >>> render_tile(model, request, 'protected_edit')
-    u'permission edit'
-
-    >>> render_tile(model, request, 'protected_view')
-    u'permission view'
-
-    >>> render_tile(model, request, 'protected_login')
-    u'permission login'
-
-Override secured tile::
-
-    >>> @tile(name='protected_delete', permission='delete')
-    ... class ProtectedDeleteOverride(Tile):
-    ...     def render(self):
-    ...         return u'permission delete override'
-    >>> render_tile(model, request, 'protected_delete')
-    u'permission delete override'
-
-If tile is registered non-strict, render_tile returns empty string::
-
-    >>> @tile(name='protected_unstrict', permission='delete', strict=False)
-    ... class ProtectedUnstrict(Tile):
-    ...     def render(self):
-    ...         return u'unstrict'
-    >>> authn.unauthenticated_userid = lambda *args: None
-    >>> render_tile(model, request, 'protected_unstrict')
-    u''
-
-If an error occours in tile, do not swallow error::
-
-    >>> @tile(name='raisingtile', permission='login')
-    ... class RaisingTile(Tile):
-    ...     def render(self):
-    ...         raise Exception(u'Tile is not willing to perform')
-    >>> render_tile(model, request, 'raisingtile')
-    Traceback (most recent call last):
-      ...
-    Exception: Tile is not willing to perform
-
 Some messages were logged::
 
     >>> logger.messages
