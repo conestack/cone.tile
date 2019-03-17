@@ -19,6 +19,7 @@ from pyramid.security import Deny
 from pyramid.security import Everyone
 from pyramid.security import view_execution_permitted
 from webob.exc import HTTPFound
+from webob.response import Response
 from zope.component import ComponentLookupError
 import doctest
 import unittest
@@ -413,67 +414,93 @@ class TestTile(TileTestCase):
 
         del request.environ['redirect']
 
+    def test_render_template_to_response(self):
+        model = Model()
+        request = self.layer.new_request()
+
+        err = self.expectError(
+            ValueError,
+            render_template_to_response,
+            ''
+        )
+        self.assertEqual(str(err), 'Expected kwargs missing: model, request.')
+
+        err = self.expectError(
+            ValueError,
+            render_template_to_response,
+            '',
+            model='foo'
+        )
+        self.assertEqual(str(err), 'Expected kwargs missing: model, request.')
+
+        err = self.expectError(
+            ValueError,
+            render_template_to_response,
+            '',
+            request='foo'
+        )
+        self.assertEqual(str(err), 'Expected kwargs missing: model, request.')
+
+        err = self.expectError(
+            ValueError,
+            render_template_to_response,
+            'testdata/foo.pt',
+            model=model,
+            request=request
+        )
+        self.assertTrue(str(err).startswith(
+            'Missing template asset: testdata/foo.pt'
+        ))
+
+        response = render_template_to_response(
+            'cone.tile:testdata/tile1.pt',
+            model=model,
+            request=request
+        )
+        self.assertTrue(isinstance(response, Response))
+
+        response = render_template_to_response(
+            'cone.tile:testdata/tmpl1.pt',
+            model=model,
+            request=request
+        )
+        self.assertTrue(isinstance(response, HTTPFound))
+        del request.environ['redirect']
+
+        response = render_template_to_response(
+            'cone.tile:testdata/tmpl2.pt',
+            model=model,
+            request=request
+        )
+        self.assertTrue(isinstance(response, HTTPFound))
+        del request.environ['redirect']
+
+    def test_render_to_response(self):
+        request = self.layer.new_request()
+
+        response = render_to_response(request, 'foo')
+        self.assertTrue(isinstance(response, Response))
+
+        request.environ['redirect'] = 'http://example.com/foo'
+        response = render_to_response(request, 'foo')
+        self.assertTrue(isinstance(response, HTTPFound))
+
+        request.environ['redirect'] = HTTPFound(location='http://example.com')
+        response = render_to_response(request, 'foo')
+        self.assertTrue(request.environ['redirect'] is response)
+        del request.environ['redirect']
+
+    def test_nodeurl(self):
+        model = Model()
+        request = self.layer.new_request()
+
+        register_tile(name='urltile', path='testdata/tile4.pt')
+        self.assertEqual(
+            render_tile(model, request, 'urltile'),
+            u'<span>http://example.com</span>\n'
+        )
+
 """
-Test ``render_template_to_response``::
-
-    >>> render_template_to_response('')
-    Traceback (most recent call last):
-      ...
-    ValueError: Expected kwargs missing: model, request.
-
-    >>> render_template_to_response('', model='foo')
-    Traceback (most recent call last):
-      ...
-    ValueError: Expected kwargs missing: model, request.
-
-    >>> render_template_to_response('', request='foo')
-    Traceback (most recent call last):
-      ...
-    ValueError: Expected kwargs missing: model, request.
-
-    >>> render_template_to_response(
-    ...     'testdata/tile1.pt', model=model, request=request)
-    Traceback (most recent call last):
-      ...
-    ValueError: Missing template asset: testdata/tile1.pt (...tile1.pt)
-
-    >>> render_template_to_response(
-    ...     'cone.tile:testdata/tile1.pt', model=model, request=request)
-    <Response at ... 200 OK>
-
-    >>> render_template_to_response(
-    ...     'cone.tile:testdata/tmpl1.pt', model=model, request=request)
-    <HTTPFound at ... 302 Found>
-
-    >>> del request.environ['redirect']
-
-    >>> render_template_to_response(
-    ...     'cone.tile:testdata/tmpl2.pt', model=model, request=request)
-    <HTTPFound at ... 302 Found>
-
-    >>> del request.environ['redirect']
-
-Test ``render_to_response``::
-
-    >>> render_to_response(request, 'foo')
-    <Response at ... 200 OK>
-
-    >>> request.environ['redirect'] = 'http://example.com/foo'
-    >>> render_to_response(request, 'foo')
-    <HTTPFound at ... 302 Found>
-
-    >>> request.environ['redirect'] = HTTPFound(location='http://example.com')
-    >>> render_to_response(request, 'foo')
-    <HTTPFound at ... 302 Found>
-
-    >>> del request.environ['redirect']
-
-Check ``nodeurl``::
-
-    >>> register_tile(name='urltile', path='testdata/tile4.pt', _level=1)
-    >>> render_tile(model, request, 'urltile')
-    u'<span>http://example.com</span>\n'
-
 Check tile securing.
 
 Define ACL for model::
