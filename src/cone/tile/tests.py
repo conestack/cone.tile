@@ -357,40 +357,63 @@ class TestTile(TileTestCase):
         self.assertEqual(request.environ['redirect'], 'http://example.com/foo')
         del request.environ['redirect']
 
+    def test_render_template(self):
+        model = Model()
+        request = self.layer.new_request()
+
+        err = self.expectError(
+            ValueError,
+            render_template,
+            ''
+        )
+        self.assertEqual(str(err), 'Expected kwargs missing: model, request.')
+
+        err = self.expectError(
+            ValueError,
+            render_template,
+            '',
+            model='foo'
+        )
+        self.assertEqual(str(err), 'Expected kwargs missing: model, request.')
+
+        err = self.expectError(
+            ValueError,
+            render_template,
+            '',
+            request='foo'
+        )
+        self.assertEqual(str(err), 'Expected kwargs missing: model, request.')
+
+        err = self.expectError(
+            ValueError,
+            render_template,
+            'testdata/tile1.pt',
+            model=model,
+            request=request
+        )
+        self.assertEqual(
+            str(err),
+            'Relative path not supported: testdata/tile1.pt'
+        )
+
+        rendered = render_template(
+            'cone.tile:testdata/tile1.pt',
+            model=model,
+            request=request
+        )
+        self.assertEqual(rendered, u'<span>Tile One</span>')
+
+        request.environ['redirect'] = 'http://example.com/foo'
+        rendered = render_template(
+            'cone.tile:testdata/tile1.pt',
+            model=model,
+            request=request
+        )
+        self.assertEqual(rendered, u'')
+
+        del request.environ['redirect']
+
 """
-Test ``render_template``::
-
-    >>> render_template('')
-    Traceback (most recent call last):
-      ...
-    ValueError: Expected kwargs missing: model, request.
-
-    >>> render_template('', model='foo')
-    Traceback (most recent call last):
-      ...
-    ValueError: Expected kwargs missing: model, request.
-
-    >>> render_template('', request='foo')
-    Traceback (most recent call last):
-      ...
-    ValueError: Expected kwargs missing: model, request.
-
-    >>> render_template('testdata/tile1.pt', model=model, request=request)
-    Traceback (most recent call last):
-      ...
-    ValueError: Relative path not supported: testdata/tile1.pt
-
-    >>> render_template(
-    ...     'cone.tile:testdata/tile1.pt', model=model, request=request)
-    u'<span>Tile One</span>'
-
-    >>> request.environ['redirect'] = 'http://example.com/foo'
-    >>> render_template(
-    ...     'cone.tile:testdata/tile1.pt', model=model, request=request)
-    u''
-
-    >>> del request.environ['redirect']
-
 Test ``render_template_to_response``::
 
     >>> render_template_to_response('')
