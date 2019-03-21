@@ -47,12 +47,10 @@ setup(
     ],
     extras_require=dict(
         test=[
-            'interlude',
             'plone.testing'
         ]
     ),
     tests_require=[
-        'interlude',
         'plone.testing'
     ],
     test_suite='cone.tile.tests.test_suite'

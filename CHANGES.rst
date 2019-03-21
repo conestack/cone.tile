@@ -5,6 +5,9 @@ Changelog
 1.0 (unreleased)
 ----------------
 
+- Convert doctests to unittests.
+  [rnix, 2019-03-21]
+
 - Use ``traceback`` module instead of ``zope.exceptions`` to format
   exceptions in ``render_template``.
   [rnix, 2017-10-06]

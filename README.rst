@@ -130,8 +130,8 @@ Summary of the test coverage report::
   lines   cov%   module   (path)
       1   100%   cone.__init__
      10   100%   cone.tile.__init__
-    269   100%   cone.tile._api
-     12   100%   cone.tile.tests
+    268   100%   cone.tile._api
+    481    99%   cone.tile.tests
 
 
 Contributors

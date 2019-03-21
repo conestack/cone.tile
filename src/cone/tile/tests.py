@@ -118,6 +118,38 @@ class TileTestCase(unittest.TestCase):
             ))
 
 
+class TestTileTestCase(TileTestCase):
+
+    def test_expectError(self):
+        def raising():
+            raise Exception('error')
+
+        err = self.expectError(Exception, raising)
+        self.assertEqual(str(err), 'error')
+
+        def not_raising():
+            pass
+
+        err = None
+        try:
+            self.expectError(Exception, not_raising)
+        except Exception as e:
+            err = e
+        finally:
+            self.assertTrue(isinstance(err, Failure))
+
+    def test_checkOutput(self):
+        self.checkOutput('a', 'a')
+
+        err = None
+        try:
+            self.checkOutput('a', 'b')
+        except Exception as e:
+            err = e
+        finally:
+            self.assertTrue(isinstance(err, Failure))
+
+
 def secured(func):
     def wrapped(self):
         registry = self.layer.registry
@@ -287,15 +319,16 @@ class TestTile(TileTestCase):
         )
 
         # Missing tile name
+        err = None
         try:
             @tile()
             class NoTileNameTile(Tile):
                 pass
-
-            raise Exception('Missing tile name test expected to fail')
         except ValueError as e:
+            err = e
+        finally:
             self.assertEqual(
-                str(e),
+                str(err),
                 (
                     "Tile ``name`` must be either given at registration time "
                     "or set on given tile class: "
@@ -650,8 +683,7 @@ class TestTile(TileTestCase):
         # If tile is registered non-strict, render_tile returns empty string
         @tile(name='protected_unstrict', permission='delete', strict=False)
         class ProtectedUnstrict(Tile):
-            def render(self):
-                return u'unstrict'
+            pass
 
         authn.unauthenticated_userid = lambda *args: None
 
