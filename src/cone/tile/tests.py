@@ -751,14 +751,16 @@ class TestTile(TileTestCase):
         """, self.layer.logger.messages[0])
 
 
-if __name__ == '__main__':
+def run_tests():
     from cone.tile import tests
-    from zope.testrunner import options
     from zope.testrunner.runner import Runner
 
     suite = unittest.TestSuite()
     suite.addTest(unittest.findTestCases(tests))
 
-    opts = options.get_options(['--color', '--progress'])
-    runner = Runner(options=opts, found_suites=[suite])
+    runner = Runner(found_suites=[suite])
     runner.run()
+
+
+if __name__ == '__main__':
+    run_tests()

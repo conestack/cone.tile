@@ -1,5 +1,6 @@
 from setuptools import find_packages
 from setuptools import setup
+from setuptools.command.test import test
 import os
 
 
@@ -15,6 +16,13 @@ longdesc = '\n\n'.join([read_file(name) for name in [
     'CHANGES.rst',
     'LICENSE.rst'
 ]])
+
+
+class Test(test):
+
+    def run_tests(self):
+        from cone.tile import tests
+        tests.run_tests()
 
 
 setup(
@@ -45,13 +53,7 @@ setup(
         'pyramid',
         'pyramid_chameleon',
     ],
-    extras_require=dict(
-        test=[
-            'zope.testrunner'
-        ]
-    ),
-    tests_require=[
-        'zope.testrunner'
-    ],
-    test_suite='cone.tile.tests.test_suite'
+    extras_require=dict(test=['zope.testrunner']),
+    tests_require=['zope.testrunner'],
+    cmdclass=dict(test=Test)
 )
