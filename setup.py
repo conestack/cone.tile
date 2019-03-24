@@ -8,7 +8,7 @@ def read_file(name):
         return f.read()
 
 
-version = '0.9.7.dev0'
+version = '1.0.dev0'
 shortdesc = 'Provide parts of a web application as tiles.'
 longdesc = '\n\n'.join([read_file(name) for name in [
     'README.rst',
@@ -29,9 +29,9 @@ setup(
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
     ],
     keywords='',
-    author='BlueDynamics Alliance',
-    author_email='dev@bluedynamics.com',
-    url=u'https://github.com/bluedynamics/cone.tile',
+    author='Robert Niederreiter',
+    author_email='rnix@squarewave.at',
+    url='https://github.com/bluedynamics/cone.tile',
     license='Simplified BSD',
     packages=find_packages('src'),
     package_dir={'': 'src'},
@@ -43,10 +43,15 @@ setup(
         'zope.component',
         'zope.exceptions',
         'pyramid',
+        'pyramid_chameleon',
     ],
     extras_require=dict(
-        test=['interlude']
+        test=[
+            'plone.testing'
+        ]
     ),
-    tests_require=['interlude'],
-    test_suite="cone.tile.tests.test_suite"
+    tests_require=[
+        'plone.testing'
+    ],
+    test_suite='cone.tile.tests.test_suite'
 )

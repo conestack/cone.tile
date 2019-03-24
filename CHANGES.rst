@@ -2,10 +2,28 @@
 Changelog
 =========
 
-0.9.7
------
+1.0 (unreleased)
+----------------
 
-- No changes yet.
+- Convert doctests to unittests.
+  [rnix, 2019-03-21]
+
+- ``tile`` decorator uses ``venusian`` to defer tile registration now.
+  [rnix, 2015-11-06]
+
+- Accept ``name`` as keyword instead of positional argument in
+  ``register_tile`` and ``tile`` decorator.
+  [rnix, 2015-11-06]
+
+- ``registerTile`` has been renamed to ``register_tile``.
+  [rnix, 2015-11-06]
+
+- Update to pyramid 1.5
+  [rnix, 2015-11-02]
+
+- Remove useless test case due to this change.
+  https://github.com/Pylons/pyramid/commit/4b552e539a1725356b9982261b73fd88de7d59a1#diff-bcda6948340ab38542fe18fd2365ac70R144
+  [rnix, 2015-11-02]
 
 
 0.9.6

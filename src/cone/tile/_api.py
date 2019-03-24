@@ -1,11 +1,12 @@
-from pyramid.chameleon_zpt import ZPTTemplateRenderer
 try:
-    # pyramid 1.1
+    from pyramid.chameleon_zpt import ZPTTemplateRenderer
+except ImportError:
+    from pyramid_chameleon.zpt import ZPTTemplateRenderer
+try:
     from pyramid.config import preserve_view_attrs
-except ImportError:                                         #pragma NO COVERAGE
-    # pyramid 1.2
-    from pyramid.config.views import preserve_view_attrs    #pragma NO COVERAGE
-from pyramid.exceptions import Forbidden
+except ImportError:
+    from pyramid.config.views import preserve_view_attrs
+from pyramid.httpexceptions import HTTPForbidden
 from pyramid.interfaces import IAuthenticationPolicy
 from pyramid.interfaces import IAuthorizationPolicy
 from pyramid.interfaces import IDebugLogger
@@ -15,7 +16,10 @@ from pyramid.interfaces import ISecuredView
 from pyramid.interfaces import IViewClassifier
 from pyramid.path import caller_package
 from pyramid.renderers import RendererHelper
-from pyramid.renderers import template_renderer_factory
+try:
+    from pyramid.renderers import template_renderer_factory
+except ImportError:
+    from pyramid_chameleon.renderer import template_renderer_factory
 from pyramid.threadlocal import get_current_registry
 from webob import Response
 from webob.exc import HTTPFound
@@ -28,12 +32,12 @@ import os
 import sys
 import traceback
 import urllib
+import venusian
 
 
 class ITile(Interface):
     """Renders some HTML snippet.
     """
-
     name = Attribute(u"The name under which this tile is registered.")
     show = Attribute(u"Flag wether to render the tile.")
 
@@ -54,7 +58,7 @@ class ITile(Interface):
 
 def _update_kw(**kw):
     if not ('request' in kw and 'model' in kw):
-        raise ValueError, "Expected kwargs missing: model, request."
+        raise ValueError('Expected kwargs missing: model, request.')
     kw.update({'tile': TileRenderer(kw['model'], kw['request'])})
     return kw
 
@@ -72,12 +76,12 @@ def render_template(path, **kw):
     if _redirect(kw):
         return u''
     if not (':' in path or os.path.isabs(path)):
-        raise ValueError, 'Relative path not supported: %s' % path
+        raise ValueError('Relative path not supported: {}'.format(path))
     info = RendererHelper(name=path, registry=kw['request'].registry)
     renderer = template_renderer_factory(info, ZPTTemplateRenderer)
     try:
         return renderer(kw, {})
-    except Exception, e:
+    except Exception:
         etype, value, tb = sys.exc_info()
         msg = 'Error while rendering tile template.\n{}'.format(
             ''.join(traceback.format_exception(etype, value, tb))
@@ -100,8 +104,9 @@ def render_template_to_response(path, **kw):
         if isinstance(redirect, HTTPFound):
             return redirect
         return HTTPFound(location=redirect)
-    response_factory = kw['request'].registry.queryUtility(IResponseFactory,
-                                                           default=Response)
+    response_factory = kw['request'].registry.queryUtility(
+        IResponseFactory,
+        default=Response)
     return response_factory(result)
 
 
@@ -113,8 +118,9 @@ def render_to_response(request, result):
         if isinstance(redirect, HTTPFound):
             return redirect
         return HTTPFound(location=redirect)
-    response_factory = request.registry.queryUtility(IResponseFactory,
-                                                     default=Response)
+    response_factory = request.registry.queryUtility(
+        IResponseFactory,
+        default=Response)
     return response_factory(result)
 
 
@@ -137,21 +143,25 @@ def render_tile(model, request, name, catch_errors=True):
         will be catched and the error message will be returned as the result
     """
     if not catch_errors:
-        return request.registry.getMultiAdapter((model, request),
-                                                ITile, name=name)
+        return request.registry.getMultiAdapter(
+            (model, request),
+            ITile,
+            name=name)
     try:
-        return request.registry.getMultiAdapter((model, request),
-                                                ITile, name=name)
+        return request.registry.getMultiAdapter(
+            (model, request),
+            ITile,
+            name=name)
     except ComponentLookupError, e:
         # XXX: ComponentLookupError appears even if another error causes tile
         #      __call__ to fail.
         settings = request.registry.settings
         if settings.get('debug_authorization', False):
-            msg = u"Error in rendering_tile: %s" % str(e)
+            msg = u"Error in rendering_tile: {}".format(str(e))
             logger = request.registry.getUtility(IDebugLogger)
             logger.debug(msg)
-        return u"Tile with name '%s' not found:<br /><pre>%s</pre>" % \
-               (name, cgi.escape(str(e).decode('utf-8')))
+        return u"Tile with name '{}' not found:<br /><pre>{}</pre>".format(
+            name, cgi.escape(str(e).decode('utf-8')))
 
 
 class TileRenderer(object):
@@ -161,7 +171,8 @@ class TileRenderer(object):
     """
 
     def __init__(self, model, request):
-        self.model, self.request = model, request
+        self.model = model
+        self.request = request
 
     def __call__(self, name):
         return render_tile(self.model, self.request, name)
@@ -224,8 +235,11 @@ class Tile(object):
         if not self.show:
             return u''
         if self.path:
-            result = render_template(self.path, request=request,
-                                     model=model, context=self)
+            result = render_template(
+                self.path,
+                request=request,
+                model=model,
+                context=self)
         else:
             renderer = getattr(self, self.attribute)
             result = renderer()
@@ -265,45 +279,49 @@ class Tile(object):
     def nodeurl(self):
         """XXX: move out from here
         """
-        #XXX: see cone.app.browser.utils, not imported in order not to
-        #depend on it, as this is supposed to move anyway
-        relpath = [urllib.quote(p.replace('/', '__s_l_a_s_h__')) \
-                       for p in self.model.path if p is not None]
-        return '/'.join([self.request.application_url] + relpath)
+        # XXX: see cone.app.browser.utils, not imported in order not to
+        # depend on it, as this is supposed to move anyway
+        rp = [p for p in self.model.path if p is not None]
+        rp = [urllib.quote(p.replace('/', '__s_l_a_s_h__')) for p in rp]
+        return '/'.join([self.request.application_url] + rp)
 
 
 def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
     """wraps tile and does security checks.
     """
     wrapped_tile = tile
-    if not authn_policy and not authz_policy:
-        return tile
-    def _secured_tile(context, request):
-        principals = authn_policy.effective_principals(request)
-        if authz_policy.permits(context, principals, permission):
-            return tile(context, request)
-        msg = getattr(request, 'authdebug_message',
-                      'Unauthorized: tile %s failed permission check' % tile)
-        if strict:
-            raise Forbidden(msg)
-        settings = request.registry.settings
-        if settings.get('debug_authorization', False):
-            logger = request.registry.getUtility(IDebugLogger)
-            logger.debug(msg)
-        return u''
-    _secured_tile.__call_permissive__ = tile
-    def _permitted(context, request):
-        principals = authn_policy.effective_principals(request)
-        return authz_policy.permits(context, principals, permission)
-    _secured_tile.__permitted__ = _permitted
-    wrapped_tile = _secured_tile
+    if authn_policy and authz_policy and (permission is not None):
+        def _permitted(context, request):
+            principals = authn_policy.effective_principals(request)
+            return authz_policy.permits(context, principals, permission)
+
+        def _secured_tile(context, request):
+            result = _permitted(context, request)
+            if result:
+                return tile(context, request)
+            msg = getattr(
+                request,
+                'authdebug_message',
+                'Unauthorized: tile {} failed permission check'.format(tile)
+            )
+            if strict:
+                raise HTTPForbidden(msg, result=result)
+            settings = request.registry.settings
+            if settings.get('debug_authorization', False):
+                logger = request.registry.getUtility(IDebugLogger)
+                logger.debug(msg)
+            return u''
+        _secured_tile.__call_permissive__ = tile
+        _secured_tile.__permitted__ = _permitted
+        _secured_tile.__permission__ = permission
+        wrapped_tile = _secured_tile
     preserve_view_attrs(tile, wrapped_tile)
     return wrapped_tile
 
 
 # Registration
-def registerTile(name=None, path=None, attribute=None, interface=Interface,
-                 class_=Tile, permission='view', strict=True, _level=2):
+def register_tile(name=None, path=None, attribute=None, interface=Interface,
+                  class_=Tile, permission='view', strict=True, _level=2):
     """Registers a tile.
 
     ``name``
@@ -329,7 +347,7 @@ def registerTile(name=None, path=None, attribute=None, interface=Interface,
     ``permission``
         Enables security checking for this tile. Defaults to ``view``. If set to
         ``None`` security checks are disabled.
-    
+
     ``strict``
         Wether to raise ``Forbidden`` or not. Defaults to ``True``. If set to
         ``False`` the exception is consumed and an empty unicode string is
@@ -341,69 +359,74 @@ def registerTile(name=None, path=None, attribute=None, interface=Interface,
     """
     if name is None:
         name = class_.name
-
     if name is None:
         raise ValueError((
             'Tile ``name`` must be either given at registration time '
             'or set on given tile class: {}'
         ).format(str(class_)))
-
     if path and not (':' in path or os.path.isabs(path)):
-        path = '%s:%s' % (caller_package(_level).__name__, path)
-
+        path = '{}:{}'.format(caller_package(_level).__name__, path)
     tile = class_(path=path, attribute=attribute, name=name)
-
     registry = get_current_registry()
     registered = registry.adapters.registered
     unregister = registry.adapters.unregister
-
     logger = registry.getUtility(IDebugLogger)
-
     if permission is not None:
         authn_policy = registry.queryUtility(IAuthenticationPolicy)
         authz_policy = registry.queryUtility(IAuthorizationPolicy)
-
         tile = _secure_tile(
-            tile, permission, authn_policy, authz_policy, strict)
-
-        exists = registered((IViewClassifier, IRequest, interface),
-                            ISecuredView, name=name)
+            tile,
+            permission,
+            authn_policy,
+            authz_policy,
+            strict)
+        exists = registered(
+            (IViewClassifier, IRequest, interface),
+            ISecuredView,
+            name=name)
         if exists:
-            msg = u"Unregister secured view for '%s' with name '%s'" % (
+            msg = u"Unregister secured view for '{}' with name '{}'".format(
                 str(interface), name)
             logger.debug(msg)
-            unregister((IViewClassifier, IRequest, interface),
-                       ISecuredView, name=name)
-
+            unregister(
+                (IViewClassifier, IRequest, interface),
+                ISecuredView,
+                name=name)
         registry.registerAdapter(
             tile,
             (IViewClassifier, IRequest, interface),
             ISecuredView,
             name)
-
     exists = registered((interface, IRequest), ITile, name=name)
     if exists:
-        msg = u"Unregister tile for '%s' with name '%s'" % (
+        msg = u"Unregister tile for '{}' with name '{}'".format(
             str(interface), name)
         logger.debug(msg)
         unregister((interface, IRequest), ITile, name=name)
+    registry.registerAdapter(
+        tile,
+        [interface, IRequest],
+        ITile,
+        name,
+        event=False)
 
-    registry.registerAdapter(tile, [interface, IRequest], ITile, name,
-                             event=False)
+
+registerTile = register_tile  # B/C
 
 
 class tile(object):
     """Decorator to register classes and functions as tiles.
     """
+    venusian = venusian  # for testing injection
 
     def __init__(self, name=None, path=None, attribute=None,
                  interface=Interface, permission='view',
                  strict=True, _level=2):
-        """See ``registerTile`` for details on the other parameters.
+        """See ``register_tile`` for details on the other parameters.
         """
         self.name = name
         if path and not (':' in path or os.path.isabs(path)):
-            path = '%s:%s' % (caller_package(_level).__name__, path)
+            path = '{}:{}'.format(caller_package(_level).__name__, path)
         self.path = path
         self.attribute = attribute
         self.interface = interface
@@ -411,11 +434,17 @@ class tile(object):
         self.strict = strict
 
     def __call__(self, ob):
-        registerTile(name=self.name,
-                     path=self.path,
-                     attribute=self.attribute,
-                     interface=self.interface,
-                     class_=ob,
-                     permission=self.permission,
-                     strict=self.strict)
+        kw = dict(
+            name=self.name,
+            path=self.path,
+            attribute=self.attribute,
+            interface=self.interface,
+            class_=ob,
+            permission=self.permission,
+            strict=self.strict
+        )
+
+        def callback(context, name, ob):
+            register_tile(**kw)
+        self.venusian.attach(ob, callback, category='pyramid', depth=1)
         return ob
