@@ -2,6 +2,7 @@
 /.installed.cfg
 /.project
 /.pydevproject
+/.coverage
 /pip-selfcheck.json
 /src/cone.tile.egg-info/
 /dist/
