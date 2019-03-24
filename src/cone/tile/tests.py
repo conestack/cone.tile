@@ -6,7 +6,6 @@ from cone.tile import render_to_response
 from cone.tile import Tile
 from cone.tile import tile
 from cone.tile import TileRenderer
-from plone.testing import Layer
 from pyramid import testing
 from pyramid.authentication import CallbackAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
@@ -57,7 +56,11 @@ class Model(testing.DummyResource):
     path = [None]
 
 
-class TileTestLayer(Layer):
+class TileTestLayer(object):
+
+    def __init__(self):
+        self.__name__ = self.__class__.__name__
+        self.__bases__ = []
 
     def setUp(self):
         tile.venusian = DummyVenusian()
@@ -749,4 +752,13 @@ class TestTile(TileTestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    from cone.tile import tests
+    from zope.testrunner import options
+    from zope.testrunner.runner import Runner
+
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.findTestCases(tests))
+
+    opts = options.get_options(['--color', '--progress'])
+    runner = Runner(options=opts, found_suites=[suite])
+    runner.run()

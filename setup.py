@@ -47,11 +47,11 @@ setup(
     ],
     extras_require=dict(
         test=[
-            'plone.testing'
+            'zope.testrunner'
         ]
     ),
     tests_require=[
-        'plone.testing'
+        'zope.testrunner'
     ],
     test_suite='cone.tile.tests.test_suite'
 )
