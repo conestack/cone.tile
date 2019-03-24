@@ -15,6 +15,6 @@ install:
   #- pip install zope.deprecation
   #- pip install https://github.com/bluedynamics/odict/archive/master.zip
   #- pip install https://github.com/bluedynamics/plumber/archive/master.zip
-  - python setup.py install
+  - python setup.py install .[tests]
 
 script: python -m cone.tile.tests
