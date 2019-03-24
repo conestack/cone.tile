@@ -127,11 +127,13 @@ Test coverage
 
 Summary of the test coverage report::
 
-  lines   cov%   module   (path)
-      1   100%   cone.__init__
-     10   100%   cone.tile.__init__
-    268   100%   cone.tile._api
-    481    99%   cone.tile.tests
+    Name                        Stmts   Miss  Cover
+    -----------------------------------------------
+    src/cone/tile/__init__.py      10      0   100%
+    src/cone/tile/_api.py         213      0   100%
+    src/cone/tile/tests.py        353      0   100%
+    -----------------------------------------------
+    TOTAL                         576      0   100%
 
 
 Contributors

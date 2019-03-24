@@ -45,9 +45,7 @@ class DummyLogger(object):
     def info(self, msg):
         self.messages.append(msg)
 
-    def error(self, msg):
-        self.messages.append(msg)
-
+    error = info
     warn = info
     debug = info
 
@@ -268,12 +266,12 @@ class TestTile(TileTestCase):
         # By default, render error message if tile ComponentLookupError
         self.checkOutput("""
         Tile with name 'inexistent' not found:<br /><pre>((&lt;cone.tile.tests.Model
-        instance at ...&gt;, &lt;pyramid.testing.DummyRequest object at ...&gt;),
+        ... at ...&gt;, &lt;pyramid.testing.DummyRequest object at ...&gt;),
         &lt;InterfaceClass cone.tile._api.ITile&gt;, 'inexistent')</pre>
         """, render_tile(model, request, 'inexistent'))
 
         self.checkOutput("""
-        Error in rendering_tile: ((<cone.tile.tests.Model instance at ...>,
+        Error in rendering_tile: ((<cone.tile.tests.Model ... at ...>,
         <pyramid.testing.DummyRequest object at ...>),
         <InterfaceClass cone.tile._api.ITile>, 'inexistent')
         """, self.layer.logger.messages[0])
@@ -330,14 +328,11 @@ class TestTile(TileTestCase):
         except ValueError as e:
             err = e
         finally:
-            self.assertEqual(
-                str(err),
-                (
-                    "Tile ``name`` must be either given at registration time "
-                    "or set on given tile class: "
-                    "<class 'cone.tile.tests.NoTileNameTile'>"
-                )
-            )
+            self.checkOutput("""
+            Tile ``name`` must be either given at registration time
+            or set on given tile class:
+            <class 'cone.tile.tests...NoTileNameTile'>
+            """, str(err))
 
         # Optional kw arg ``attribute`` can be given which is responsible to
         # render the tile instead of defining a template. By default ``render``
@@ -695,7 +690,7 @@ class TestTile(TileTestCase):
         self.assertEqual(render_tile(model, request, 'protected_unstrict'), u'')
 
         self.checkOutput("""
-        Unauthorized: tile <cone.tile.tests.ProtectedUnstrict object at ...>
+        Unauthorized: tile <cone.tile.tests...ProtectedUnstrict object at ...>
         failed permission check
         """, self.layer.logger.messages[0])
 

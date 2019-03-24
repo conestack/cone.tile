@@ -35,6 +35,9 @@ import urllib
 import venusian
 
 
+IS_PY2 = sys.version_info[0] < 3
+
+
 class ITile(Interface):
     """Renders some HTML snippet.
     """
@@ -152,7 +155,7 @@ def render_tile(model, request, name, catch_errors=True):
             (model, request),
             ITile,
             name=name)
-    except ComponentLookupError, e:
+    except ComponentLookupError as e:
         # XXX: ComponentLookupError appears even if another error causes tile
         #      __call__ to fail.
         settings = request.registry.settings
@@ -160,8 +163,9 @@ def render_tile(model, request, name, catch_errors=True):
             msg = u"Error in rendering_tile: {}".format(str(e))
             logger = request.registry.getUtility(IDebugLogger)
             logger.debug(msg)
+        err_msg = str(e).decode('utf-8') if IS_PY2 else str(e)
         return u"Tile with name '{}' not found:<br /><pre>{}</pre>".format(
-            name, cgi.escape(str(e).decode('utf-8')))
+            name, cgi.escape(err_msg))
 
 
 class TileRenderer(object):
