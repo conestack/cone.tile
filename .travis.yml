@@ -9,12 +9,6 @@ python:
 #  - "pypy-5.3.1"
 
 install:
-  #- pip install zope.interface
-  #- pip install zope.lifecycleevent
-  #- pip install zope.component
-  #- pip install zope.deprecation
-  #- pip install https://github.com/bluedynamics/odict/archive/master.zip
-  #- pip install https://github.com/bluedynamics/plumber/archive/master.zip
   - pip install .[test]
 
 script: python -m cone.tile.tests
