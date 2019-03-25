@@ -21,9 +21,9 @@ try:
 except ImportError:
     from pyramid_chameleon.renderer import template_renderer_factory
 from pyramid.threadlocal import get_current_registry
-try:
+try:  # pragma: no coverage
     from urllib import quote
-except ImportError:
+except ImportError:  # pragma: no coverage
     from urllib.parse import quote
 from webob import Response
 from webob.exc import HTTPFound

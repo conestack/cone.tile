@@ -10,6 +10,20 @@ Splitting your application in such small and logic application parts makes it
 easy to re-use this application, simplifies application AJAXification and
 the use of same application parts in different manners.
 
+.. image:: https://img.shields.io/pypi/v/cone.tile.svg
+    :target: https://pypi.python.org/pypi/cone.tile
+    :alt: Latest PyPI version
+
+.. image:: https://img.shields.io/pypi/dm/cone.tile.svg
+    :target: https://pypi.python.org/pypi/cone.tile
+    :alt: Number of PyPI downloads
+
+.. image:: https://travis-ci.org/bluedynamics/cone.tile.svg?branch=master
+    :target: https://travis-ci.org/bluedynamics/cone.tile
+
+.. image:: https://coveralls.io/repos/github/bluedynamics/cone.tile/badge.svg?branch=master
+    :target: https://coveralls.io/github/bluedynamics/cone.tile?branch=master
+
 
 Usage
 =====
@@ -134,23 +148,6 @@ of remaining tiles to be skipped and ``request.environ['redirect']`` to be set.
 **cone.tile.render_to_response**
     Renders some result to the response considering redirection. Returns
     HTTPFound instance if redirection found, otherwise rendered response.
-
-
-Test coverage
-=============
-
-.. image:: https://travis-ci.org/bluedynamics/cone.tile.svg?branch=master
-    :target: https://travis-ci.org/bluedynamics/cone.tile
-
-Summary of the test coverage report::
-
-    Name                        Stmts   Miss  Cover
-    -----------------------------------------------
-    src/cone/tile/__init__.py      10      0   100%
-    src/cone/tile/_api.py         213      0   100%
-    src/cone/tile/tests.py        353      0   100%
-    -----------------------------------------------
-    TOTAL                         576      0   100%
 
 
 Contributors

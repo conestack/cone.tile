@@ -9,6 +9,12 @@ python:
   - "3.7"
 
 install:
-  - pip install .[test]
+  - pip install -e .[test]
 
-script: python -m cone.tile.tests
+script:
+  - python -m cone.tile.tests
+  - coverage run --source src/cone/tile -m cone.tile.tests
+  - coverage report
+
+after_success:
+  - coveralls
