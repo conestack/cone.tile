@@ -21,6 +21,10 @@ try:
 except ImportError:
     from pyramid_chameleon.renderer import template_renderer_factory
 from pyramid.threadlocal import get_current_registry
+try:
+    from urllib import quote
+except ImportError:
+    from urllib.parse import quote
 from webob import Response
 from webob.exc import HTTPFound
 from zope.component import ComponentLookupError
@@ -31,7 +35,6 @@ import cgi
 import os
 import sys
 import traceback
-import urllib
 import venusian
 
 
@@ -286,7 +289,9 @@ class Tile(object):
         # XXX: see cone.app.browser.utils, not imported in order not to
         # depend on it, as this is supposed to move anyway
         rp = [p for p in self.model.path if p is not None]
-        rp = [urllib.quote(p.replace('/', '__s_l_a_s_h__')) for p in rp]
+        # XXX: replacing with '__s_l_a_s_h__' is a total hack, will be removed
+        #      once cone.ugm is ported, which depends on this foo
+        rp = [quote(p.replace('/', '__s_l_a_s_h__')) for p in rp]
         return '/'.join([self.request.application_url] + rp)
 
 

@@ -550,6 +550,18 @@ class TestTile(TileTestCase):
             u'<span>http://example.com</span>\n'
         )
 
+        model.path = [None, 'foo']
+        self.assertEqual(
+            render_tile(model, request, 'urltile'),
+            u'<span>http://example.com/foo</span>\n'
+        )
+
+        model.path = [None, 'foo', 'bar/baz']
+        self.assertEqual(
+            render_tile(model, request, 'urltile'),
+            u'<span>http://example.com/foo/bar__s_l_a_s_h__baz</span>\n'
+        )
+
     @secured
     def test_secured(self, authn):
         @tile(name='protected_login', permission='login')
