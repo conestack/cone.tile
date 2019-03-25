@@ -19,22 +19,35 @@ Register tiles
 --------------
 
 A tile is registered similar to a pyramid view. Registration is done with the
-``cone.tile.registerTile`` function::
+the ``cone.tile.tile`` decorator on classes.
 
-    >>> from cone.tile import registerTile
-    >>> registerTile('a_tile',
-    ...              'package:browser/templates/a_tile.pt',
-    ...              permission='view')
+.. code-block:: python
 
-or the ``cone.tile.tile`` decorator on classes::
+    from cone.tile import tile
+    from cone.tile import Tile
 
-    >>> from cone.tile import tile, Tile
-    >>> @tile('b_tile', 'package:browser/templates/b_tile.pt',
-    ...       permission='view', strict=False)
-    ... class BTile(Tile):
-    ...     pass
+    @tile(
+        name='b_tile',
+        path='package:browser/templates/b_tile.pt',
+        permission='view',
+        strict=False)
+    class BTile(Tile):
+        pass
 
-Both, decorator and register function accept following arguments:
+There also exists a ``cone.tile.register_tile`` function. It should not be used
+directly any more. ``tile`` decorator attaches this function to venusian for
+deferred tile registration.
+
+.. code-block:: python
+
+    from cone.tile import register_tile
+
+    register_tile(
+        name='a_tile',
+        path='package:browser/templates/a_tile.pt',
+        permission='view')
+
+``tile`` decorator accepts the following arguments:
 
 **name**
     Identifier of the tile (for later lookup).
@@ -72,15 +85,19 @@ registering it again. This is useful for application theming and customization.
 Rendering tiles
 ---------------
 
-Tile rendering with the ``render_tile`` function::
+Tile rendering with the ``render_tile`` function
 
-    >>> from cone.tile import render_tile
-    >>> rendered = render_tile(model, request, name)
+.. code-block:: python
+
+    from cone.tile import render_tile
+    rendered = render_tile(model, request, name)
 
 Inside templates which are bound to the tile, more tiles can be rendered on
-current model and request via ``tile``::
+current model and request via ``tile``
 
-    >>> <tal:sometile replace="structure tile('tilename')"
+.. code-block:: html
+
+    <tal:sometile replace="structure tile('tilename')"
 
 
 The Tile
