@@ -97,7 +97,7 @@ current model and request via ``tile``
 
 .. code-block:: html
 
-    <tal:sometile replace="structure tile('tilename')"
+    <tal:sometile replace="structure tile('tilename')" />
 
 
 The Tile
