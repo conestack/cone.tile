@@ -22,6 +22,7 @@ from pyramid.security import view_execution_permitted
 from webob.exc import HTTPFound
 from webob.response import Response
 from zope.component import ComponentLookupError
+import sys
 import doctest
 import unittest
 import venusian
@@ -767,6 +768,7 @@ def run_tests():
 
     runner = Runner(found_suites=[suite])
     runner.run()
+    sys.exit(int(runner.failed))
 
 
 if __name__ == '__main__':
