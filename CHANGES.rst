@@ -5,7 +5,13 @@ Changelog
 1.0 (unreleased)
 ----------------
 
+- Drop pyramid support < 1.5.
+  [rnix, 2019-03-24]
+
 - Python 3 compatibility.
+  [rnix, 2019-03-24]
+
+- Do not use ``cgi`` module if replacement module ``html`` available.
   [rnix, 2019-03-24]
 
 - Convert doctests to unittests.

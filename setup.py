@@ -50,7 +50,7 @@ setup(
         'setuptools',
         'zope.component',
         'zope.exceptions',
-        'pyramid',
+        'pyramid>=1.5',
         'pyramid_chameleon',
     ],
     extras_require=dict(test=['zope.testrunner']),

@@ -1,11 +1,5 @@
-try:
-    from pyramid.chameleon_zpt import ZPTTemplateRenderer
-except ImportError:
-    from pyramid_chameleon.zpt import ZPTTemplateRenderer
-try:
-    from pyramid.config import preserve_view_attrs
-except ImportError:
-    from pyramid.config.views import preserve_view_attrs
+from pyramid_chameleon.zpt import ZPTTemplateRenderer
+from pyramid.config.views import preserve_view_attrs
 from pyramid.httpexceptions import HTTPForbidden
 from pyramid.interfaces import IAuthenticationPolicy
 from pyramid.interfaces import IAuthorizationPolicy
@@ -16,10 +10,7 @@ from pyramid.interfaces import ISecuredView
 from pyramid.interfaces import IViewClassifier
 from pyramid.path import caller_package
 from pyramid.renderers import RendererHelper
-try:
-    from pyramid.renderers import template_renderer_factory
-except ImportError:
-    from pyramid_chameleon.renderer import template_renderer_factory
+from pyramid_chameleon.renderer import template_renderer_factory
 from pyramid.threadlocal import get_current_registry
 try:  # pragma: no coverage
     from urllib import quote
@@ -31,7 +22,10 @@ from zope.component import ComponentLookupError
 from zope.interface import Attribute
 from zope.interface import Interface
 from zope.interface import implementer
-import cgi
+try:  # pragma: no coverage
+    import html
+except ImportError:  # pragma: no coverage
+    import cgi as html
 import os
 import sys
 import traceback
@@ -168,7 +162,7 @@ def render_tile(model, request, name, catch_errors=True):
             logger.debug(msg)
         err_msg = str(e).decode('utf-8') if IS_PY2 else str(e)
         return u"Tile with name '{}' not found:<br /><pre>{}</pre>".format(
-            name, cgi.escape(err_msg))
+            name, html.escape(err_msg))
 
 
 class TileRenderer(object):

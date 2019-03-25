@@ -268,7 +268,7 @@ class TestTile(TileTestCase):
         self.checkOutput("""
         Tile with name 'inexistent' not found:<br /><pre>((&lt;cone.tile.tests.Model
         ... at ...&gt;, &lt;pyramid.testing.DummyRequest object at ...&gt;),
-        &lt;InterfaceClass cone.tile._api.ITile&gt;, 'inexistent')</pre>
+        &lt;InterfaceClass cone.tile._api.ITile&gt;, ...inexistent...)</pre>
         """, render_tile(model, request, 'inexistent'))
 
         self.checkOutput("""
