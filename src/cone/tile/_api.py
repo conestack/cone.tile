@@ -414,9 +414,6 @@ def register_tile(name=None, path=None, attribute=None, interface=Interface,
         event=False)
 
 
-registerTile = register_tile  # B/C
-
-
 class tile(object):
     """Decorator to register classes and functions as tiles.
     """

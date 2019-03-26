@@ -49,6 +49,7 @@ setup(
     install_requires=[
         'setuptools',
         'zope.component',
+        'zope.deprecation',
         'zope.exceptions',
         'pyramid>=1.5',
         'pyramid_chameleon',
