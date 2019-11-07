@@ -2,7 +2,7 @@
 Changelog
 =========
 
-1.0 (unreleased)
+1.0 (2019-11-07)
 ----------------
 
 - Drop pyramid support < 1.5.
