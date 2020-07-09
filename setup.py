@@ -10,7 +10,7 @@ def read_file(name):
 
 
 version = '1.1.dev0'
-shortdesc = 'Provide parts of a web application as tiles.'
+shortdesc = 'Tiles for use in pyramid framework.'
 longdesc = '\n\n'.join([read_file(name) for name in [
     'README.rst',
     'CHANGES.rst',

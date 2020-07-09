@@ -1,6 +1,3 @@
-Tiles for use in pyramid framework
-==================================
-
 This package provides rendering snippets of markup organized as tiles for the
 pyramid framework.
 
@@ -153,8 +150,6 @@ of remaining tiles to be skipped and ``request.environ['redirect']`` to be set.
 Contributors
 ============
 
-- Robert Niederreiter <rnix [at] squarewave [dot] at>
-
-- Jens Klein <jens [at] bluedynamics [dot] com>
-
+- Robert Niederreiter
+- Jens Klein
 - Attila Olah
