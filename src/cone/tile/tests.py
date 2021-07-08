@@ -247,12 +247,12 @@ class TestTile(TileTestCase):
         register_tile(name='tileone', path='testdata/tile1.pt')
 
         self.checkOutput("""
-        Unregister secured view for '<InterfaceClass zope.interface.Interface>'
+        Unregister secured view for 'zope.interface.Interface'
         with name 'tileone'
         """, self.layer.logger.messages[0])
 
         self.checkOutput("""
-        Unregister tile for '<InterfaceClass zope.interface.Interface>'
+        Unregister tile for 'zope.interface.Interface'
         with name 'tileone'
         """, self.layer.logger.messages[1])
 
