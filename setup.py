@@ -9,7 +9,7 @@ def read_file(name):
         return f.read()
 
 
-version = '1.1.dev0'
+version = '1.1'
 shortdesc = 'Tiles for use in pyramid framework.'
 longdesc = '\n\n'.join([read_file(name) for name in [
     'README.rst',
