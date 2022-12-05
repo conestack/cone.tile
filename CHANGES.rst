@@ -4,7 +4,8 @@ Changes
 1.1 (unreleased)
 ----------------
 
-- No changes yet.
+- Release wheel.
+  [rnix]
 
 
 1.0 (2019-11-07)
