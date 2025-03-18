@@ -56,7 +56,7 @@ PYTHON_MIN_VERSION?=3.9
 # `VENV_ENABLED` and uv is selected, uv is used to create the virtual
 # environment.
 # Default: pip
-PYTHON_PACKAGE_INSTALLER?=pip
+PYTHON_PACKAGE_INSTALLER?=uv
 
 # Flag whether to use a global installed 'uv' or install
 # it in the virtual environment.
