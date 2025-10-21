@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cone.tile"
+version = "1.2.dev0"
+description = "Tiles for use in pyramid framework."
+readme = "README.rst"
+license = {text = "Simplified BSD"}
+authors = [{name = "Cone Contributors", email = "dev@conestack.org"}]
+classifiers = [
+    "Environment :: Web Environment",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+]
+dependencies = [
+    "zope.component",
+    "zope.deprecation",
+    "zope.exceptions",
+    "pyramid>=1.5",
+    "pyramid_chameleon",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
+[project.urls]
+Homepage = "http://github.com/conestack/cone.tile"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools]
+zip-safe = false
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.zest-releaser]
+create-wheel = true
