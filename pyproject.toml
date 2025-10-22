@@ -38,6 +38,7 @@ Homepage = "http://github.com/conestack/cone.tile"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/cone"]
+
 [tool.pytest.ini_options]
 consider_namespace_packages = true
 addopts = ["--import-mode=importlib"]
