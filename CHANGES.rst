@@ -4,6 +4,9 @@ Changes
 1.2 (unreleased)
 ----------------
 
+- Pin upper versions of dependencies.
+  [rnix]
+
 - Setup Makefile.
   [lenadax]
 
