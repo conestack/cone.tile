@@ -43,13 +43,13 @@ setup(
         'zope.component',
         'zope.deprecation',
         'zope.exceptions',
-        'pyramid>=1.5',
+        'pyramid>=1.5,<1.10',
         'pyramid_chameleon',
     ],
     extras_require=dict(
     test=[
         'pytest',
-        'cone.app[lxml]>=1.0.3',
+        'cone.app[lxml]>=1.0.3,<1.1.0',
         'zope.pytestlayer'
     ])
 )
