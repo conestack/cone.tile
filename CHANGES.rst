@@ -1,8 +1,8 @@
 Changes
 =======
 
-1.2 (unreleased)
-----------------
+2.0.0 (unreleased)
+------------------
 
 - Setup Makefile.
   [lenadax]
