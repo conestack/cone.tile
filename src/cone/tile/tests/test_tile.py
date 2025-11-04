@@ -267,12 +267,12 @@ class TestTile(TileTestCase):
         # By default, render error message if tile ComponentLookupError
         self.checkOutput(
             "Tile with name 'inexistent' not found:<br /><pre>((&lt;cone.tile." +
-            "tests.test_package.Model ... at ...&gt;, &lt;pyramid.testing." +
+            "tests.test_tile.Model ... at ...&gt;, &lt;pyramid.testing." +
             "DummyRequest object at ...&gt;), &lt;InterfaceClass cone.tile." +
             "_api.ITile&gt;, ...inexistent...)</pre>",
         render_tile(model, request, 'inexistent'))
         self.checkOutput(
-            "Error in rendering_tile: ((<cone.tile.tests.test_package.Model ... at ...>, " +
+            "Error in rendering_tile: ((<cone.tile.tests.test_tile.Model ... at ...>, " +
             "<pyramid.testing.DummyRequest object at ...>), " +
             "<InterfaceClass cone.tile._api.ITile>, 'inexistent')",
         self.layer.logger.messages[0])
@@ -757,19 +757,3 @@ class TestTile(TileTestCase):
     #         - Mock Supplement Info
     #     Exception: MockException
     #     """, self.layer.logger.messages[0])
-
-
-def run_tests():
-    from cone.tile import tests
-    from zope.testrunner.runner import Runner
-
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.findTestCases(tests))
-
-    runner = Runner(found_suites=[suite])
-    runner.run()
-    sys.exit(int(runner.failed))
-
-
-if __name__ == '__main__':
-    run_tests()
