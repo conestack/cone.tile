@@ -38,12 +38,6 @@ test = [
 [project.urls]
 Homepage = "http://github.com/conestack/cone.tile"
 
-[tool.hatch.version]
-source = "vcs"
-
-[tool.hatch.metadata]
-allow-direct-references = true
-
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
 content-type = "text/x-rst"
 
