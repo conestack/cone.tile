@@ -11,6 +11,19 @@ Changes
   [lenadax]
 
 
+1.2 (2025-10-25)
+----------------
+
+- Pin upper versions of dependencies.
+  [rnix]
+
+- Setup Makefile.
+  [lenadax]
+
+- Run tests with pytest.
+  [lenadax]
+
+
 1.1 (2022-12-05)
 ----------------
 
