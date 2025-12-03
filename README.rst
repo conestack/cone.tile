@@ -15,11 +15,9 @@ the use of same application parts in different manners.
     :target: https://pypi.python.org/pypi/cone.tile
     :alt: Number of PyPI downloads
 
-.. image:: https://travis-ci.org/bluedynamics/cone.tile.svg?branch=master
-    :target: https://travis-ci.org/bluedynamics/cone.tile
-
-.. image:: https://coveralls.io/repos/github/bluedynamics/cone.tile/badge.svg?branch=master
-    :target: https://coveralls.io/github/bluedynamics/cone.tile?branch=master
+.. image:: https://github.com/conestack/cone.tile/actions/workflows/test.yml/badge.svg
+    :target: https://github.com/conestack/cone.tile/actions/workflows/test.yml
+    :alt: Test cone.tile
 
 
 Usage
