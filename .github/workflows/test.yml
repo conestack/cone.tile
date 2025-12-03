@@ -1,4 +1,4 @@
-name: Test cone.tile
+name: Python Tests
 
 on: [push]
 
