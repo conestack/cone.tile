@@ -32,7 +32,6 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest",
-    "zope.pytestlayer",
 ]
 
 [project.urls]
