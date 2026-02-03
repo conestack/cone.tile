@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cone.tile"
-version = "2.0.0.dev0"
+version = "2.0.0"
 description = "Tiles for use in pyramid framework."
 dynamic = ["readme"]
 requires-python = ">=3.10"
