@@ -12,34 +12,25 @@ from pyramid.path import caller_package
 from pyramid.renderers import RendererHelper
 from pyramid_chameleon.renderer import template_renderer_factory
 from pyramid.threadlocal import get_current_registry
-try:  # pragma: no coverage
-    from urllib import quote
-except ImportError:  # pragma: no coverage
-    from urllib.parse import quote
+from urllib.parse import quote
 from webob import Response
 from webob.exc import HTTPFound
 from zope.component import ComponentLookupError
 from zope.interface import Attribute
 from zope.interface import Interface
 from zope.interface import implementer
-try:  # pragma: no coverage
-    import html
-except ImportError:  # pragma: no coverage
-    import cgi as html
+import html
 import os
 import sys
 import traceback
 import venusian
 
 
-IS_PY2 = sys.version_info[0] < 3
-
-
 class ITile(Interface):
     """Renders some HTML snippet.
     """
-    name = Attribute(u"The name under which this tile is registered.")
-    show = Attribute(u"Flag wether to render the tile.")
+    name = Attribute("The name under which this tile is registered.")
+    show = Attribute("Flag wether to render the tile.")
 
     def __call__(model, request):
         """Renders the tile.
@@ -74,9 +65,9 @@ def render_template(path, **kw):
     """
     kw = _update_kw(**kw)
     if _redirect(kw):
-        return u''
+        return ''
     if not (':' in path or os.path.isabs(path)):
-        raise ValueError('Relative path not supported: {}'.format(path))
+        raise ValueError(f'Relative path not supported: {path}')
     info = RendererHelper(name=path, registry=kw['request'].registry)
     renderer = template_renderer_factory(info, ZPTTemplateRenderer)
     try:
@@ -157,15 +148,16 @@ def render_tile(model, request, name, catch_errors=True):
         #      __call__ to fail.
         settings = request.registry.settings
         if settings.get('debug_authorization', False):
-            msg = u"Error in rendering_tile: {}".format(str(e))
+            msg = f"Error in rendering_tile: {e}"
             logger = request.registry.getUtility(IDebugLogger)
             logger.debug(msg)
-        err_msg = str(e).decode('utf-8') if IS_PY2 else str(e)
-        return u"Tile with name '{}' not found:<br /><pre>{}</pre>".format(
-            name, html.escape(err_msg))
+        return (
+            f"Tile with name '{name}' not found:"
+            f"<br /><pre>{html.escape(str(e))}</pre>"
+        )
 
 
-class TileRenderer(object):
+class TileRenderer:
     """Render a tile.
 
     Intended usage is as instance in template code.
@@ -180,7 +172,7 @@ class TileRenderer(object):
 
 
 @implementer(ITile)
-class Tile(object):
+class Tile:
     """Tile class.
     """
 
@@ -234,7 +226,7 @@ class Tile(object):
         self.request = request
         self.prepare()
         if not self.show:
-            return u''
+            return ''
         if self.path:
             result = render_template(
                 self.path,
@@ -245,7 +237,7 @@ class Tile(object):
             renderer = getattr(self, self.attribute)
             result = renderer()
         if request.environ.get('redirect'):
-            return u''
+            return ''
         return result
 
     @property
@@ -305,7 +297,7 @@ def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
             msg = getattr(
                 request,
                 'authdebug_message',
-                'Unauthorized: tile {} failed permission check'.format(tile)
+                f'Unauthorized: tile {tile} failed permission check'
             )
             if strict:
                 raise HTTPForbidden(msg, result=result)
@@ -313,7 +305,7 @@ def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
             if settings.get('debug_authorization', False):
                 logger = request.registry.getUtility(IDebugLogger)
                 logger.debug(msg)
-            return u''
+            return ''
         _secured_tile.__call_permissive__ = tile
         _secured_tile.__permitted__ = _permitted
         _secured_tile.__permission__ = permission
@@ -363,12 +355,12 @@ def register_tile(name=None, path=None, attribute=None, interface=Interface,
     if name is None:
         name = class_.name
     if name is None:
-        raise ValueError((
+        raise ValueError(
             'Tile ``name`` must be either given at registration time '
-            'or set on given tile class: {}'
-        ).format(str(class_)))
+            f'or set on given tile class: {class_}'
+        )
     if path and not (':' in path or os.path.isabs(path)):
-        path = '{}:{}'.format(caller_package(_level).__name__, path)
+        path = f'{caller_package(_level).__name__}:{path}'
     tile = class_(path=path, attribute=attribute, name=name)
     registry = get_current_registry()
     registered = registry.adapters.registered
@@ -388,8 +380,10 @@ def register_tile(name=None, path=None, attribute=None, interface=Interface,
             ISecuredView,
             name=name)
         if exists:
-            msg = u"Unregister secured view for '{}' with name '{}'".format(
-                str(interface), name)
+            msg = (
+                f"Unregister secured view for '{interface}' "
+                f"with name '{name}'"
+            )
             logger.debug(msg)
             unregister(
                 (IViewClassifier, IRequest, interface),
@@ -402,8 +396,7 @@ def register_tile(name=None, path=None, attribute=None, interface=Interface,
             name)
     exists = registered((interface, IRequest), ITile, name=name)
     if exists:
-        msg = u"Unregister tile for '{}' with name '{}'".format(
-            str(interface), name)
+        msg = f"Unregister tile for '{interface}' with name '{name}'"
         logger.debug(msg)
         unregister((interface, IRequest), ITile, name=name)
     registry.registerAdapter(
@@ -414,7 +407,7 @@ def register_tile(name=None, path=None, attribute=None, interface=Interface,
         event=False)
 
 
-class tile(object):
+class tile:
     """Decorator to register classes and functions as tiles.
     """
     venusian = venusian  # for testing injection
@@ -426,7 +419,7 @@ class tile(object):
         """
         self.name = name
         if path and not (':' in path or os.path.isabs(path)):
-            path = '{}:{}'.format(caller_package(_level).__name__, path)
+            path = f'{caller_package(_level).__name__}:{path}'
         self.path = path
         self.attribute = attribute
         self.interface = interface

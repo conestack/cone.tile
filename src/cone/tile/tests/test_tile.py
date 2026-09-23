@@ -22,20 +22,19 @@ from pyramid.security import view_execution_permitted
 from webob.exc import HTTPFound
 from webob.response import Response
 from zope.component import ComponentLookupError
-import sys
 import doctest
 import unittest
 import venusian
 
 
-class DummyVenusian(object):
+class DummyVenusian:
 
     def attach(self, wrapped, callback, category=None, depth=1):
         callback(None, None, wrapped)
         return None
 
 
-class DummyLogger(object):
+class DummyLogger:
 
     def __init__(self):
         self.clear()
@@ -55,7 +54,7 @@ class Model(testing.DummyResource):
     path = [None]
 
 
-class TileTestLayer(object):
+class TileTestLayer:
 
     def __init__(self):
         self.__name__ = self.__class__.__name__
@@ -79,7 +78,7 @@ class TileTestLayer(object):
         return testing.DummyRequest()
 
 
-class Example(object):
+class Example:
 
     def __init__(self, want):
         self.want = want + '\n'
@@ -106,7 +105,7 @@ class TileTestCase(unittest.TestCase):
         except exc as e:
             return e
         else:
-            msg = 'Expected \'{}\' when calling \'{}\''.format(exc, func)
+            msg = f'Expected \'{exc}\' when calling \'{func}\''
             raise Failure(msg)
 
     def checkOutput(self, want, got, optionflags=None):
@@ -190,7 +189,7 @@ class TestTile(TileTestCase):
         # The Tile object. Normally not created directly, this is done due
         # registration
         mytile = Tile('cone.tile:testdata/tile1.pt', 'render', 'foo')
-        self.assertEqual(mytile(model, request), u'<span>Tile One</span>')
+        self.assertEqual(mytile(model, request), '<span>Tile One</span>')
 
         # Tile path and attribute can be set on subclass
         class DirectPathTile(Tile):
@@ -198,18 +197,18 @@ class TestTile(TileTestCase):
 
         self.assertEqual(
             DirectPathTile()(model, request),
-            u'<span>Tile One</span>'
+            '<span>Tile One</span>'
         )
 
         class DirectAttributeTile(Tile):
             attribute = 'custom_render'
 
             def custom_render(self):
-                return u'<span>Direct Attribute</span>'
+                return '<span>Direct Attribute</span>'
 
         self.assertEqual(
             DirectAttributeTile()(model, request),
-            u'<span>Direct Attribute</span>'
+            '<span>Direct Attribute</span>'
         )
 
     def test_register_tile(self):
@@ -222,12 +221,12 @@ class TestTile(TileTestCase):
 
         # Render registered tile - first how it works in templates
         tilerenderer = TileRenderer(model, request)
-        self.assertEqual(tilerenderer('tileone'), u'<span>Tile One</span>')
+        self.assertEqual(tilerenderer('tileone'), '<span>Tile One</span>')
 
         # For simplification in Python code the same can be achieved by
         self.assertEqual(
             render_tile(model, request, 'tileone'),
-            u'<span>Tile One</span>'
+            '<span>Tile One</span>'
         )
 
     def test_override_tile(self):
@@ -238,7 +237,7 @@ class TestTile(TileTestCase):
         register_tile(name='tileone', path='../testdata/tile1_override.pt')
         self.assertEqual(
             render_tile(model, request, 'tileone'),
-            u'<span>Tile One Override</span>'
+            '<span>Tile One Override</span>'
         )
 
         # Reset overwritten tile
@@ -296,13 +295,13 @@ class TestTile(TileTestCase):
 
         @tile(name='tiletwo', path='../testdata/tile2.pt')
         class TileTwo(Tile):
-            data = u'custom'
+            data = 'custom'
 
         self.assertEqual(
             render_tile(model, request, 'tiletwo'),
             (
-                u'<span>Tile Two: <b><span>Tile One</span></b>'
-                u'</span>\n<span>custom</span>'
+                '<span>Tile Two: <b><span>Tile One</span></b>'
+                '</span>\n<span>custom</span>'
             )
         )
 
@@ -313,11 +312,11 @@ class TestTile(TileTestCase):
             name = 'name_from_tile'
 
             def render(self):
-                return u'<span>Name from tile</span>'
+                return '<span>Name from tile</span>'
 
         self.assertEqual(
             render_tile(model, request, 'name_from_tile'),
-            u'<span>Name from tile</span>'
+            '<span>Name from tile</span>'
         )
 
         # Missing tile name
@@ -341,21 +340,21 @@ class TestTile(TileTestCase):
         @tile(name='attrtile')
         class TileDefaultRenderAttr(Tile):
             def render(self):
-                return u'<h1>Rendered via attribute call</h1>'
+                return '<h1>Rendered via attribute call</h1>'
 
         self.assertEqual(
             render_tile(model, request, 'attrtile'),
-            u'<h1>Rendered via attribute call</h1>'
+            '<h1>Rendered via attribute call</h1>'
         )
 
         @tile(name='foobarattrtile', attribute='foobar')
         class TileFoobarRenderAttr(Tile):
             def foobar(self):
-                return u'<h1>Rendered via attribute foobar call</h1>'
+                return '<h1>Rendered via attribute foobar call</h1>'
 
         self.assertEqual(
             render_tile(model, request, 'foobarattrtile'),
-            u'<h1>Rendered via attribute foobar call</h1>'
+            '<h1>Rendered via attribute foobar call</h1>'
         )
 
         # Default ``render`` raises NotImplementedError
@@ -378,7 +377,7 @@ class TestTile(TileTestCase):
         class TileNotShown(Tile):
             show = 0
 
-        self.assertEqual(render_tile(model, request, 'notshowtile'), u'')
+        self.assertEqual(render_tile(model, request, 'notshowtile'), '')
 
     def test_redirect(self):
         # Tile provides a redirect function which excepts either a string
@@ -395,7 +394,7 @@ class TestTile(TileTestCase):
             def render(self):
                 self.redirect(HTTPFound(location='http://example.com'))
 
-        self.assertEqual(render_tile(model, request, 'redirecttile'), u'')
+        self.assertEqual(render_tile(model, request, 'redirecttile'), '')
 
         http_found = request.environ['redirect']
         self.assertTrue(isinstance(http_found, HTTPFound))
@@ -405,7 +404,7 @@ class TestTile(TileTestCase):
             name='redirecttiletwo',
             path='../testdata/tile3.pt'
         )
-        self.assertEqual(render_tile(model, request, 'redirecttiletwo'), u'')
+        self.assertEqual(render_tile(model, request, 'redirecttiletwo'), '')
         self.assertEqual(request.environ['redirect'], 'http://example.com/foo')
         del request.environ['redirect']
 
@@ -453,7 +452,7 @@ class TestTile(TileTestCase):
             model=model,
             request=request
         )
-        self.assertEqual(rendered, u'<span>Tile One</span>')
+        self.assertEqual(rendered, '<span>Tile One</span>')
 
         request.environ['redirect'] = 'http://example.com/foo'
         rendered = render_template(
@@ -461,7 +460,7 @@ class TestTile(TileTestCase):
             model=model,
             request=request
         )
-        self.assertEqual(rendered, u'')
+        self.assertEqual(rendered, '')
 
         del request.environ['redirect']
 
@@ -548,19 +547,19 @@ class TestTile(TileTestCase):
         register_tile(name='urltile', path='../testdata/tile4.pt')
         self.assertEqual(
             render_tile(model, request, 'urltile'),
-            u'<span>http://example.com</span>\n'
+            '<span>http://example.com</span>\n'
         )
 
         model.path = [None, 'foo']
         self.assertEqual(
             render_tile(model, request, 'urltile'),
-            u'<span>http://example.com/foo</span>\n'
+            '<span>http://example.com/foo</span>\n'
         )
 
         model.path = [None, 'foo', 'bar/baz']
         self.assertEqual(
             render_tile(model, request, 'urltile'),
-            u'<span>http://example.com/foo/bar__s_l_a_s_h__baz</span>\n'
+            '<span>http://example.com/foo/bar__s_l_a_s_h__baz</span>\n'
         )
 
     @secured
@@ -568,22 +567,22 @@ class TestTile(TileTestCase):
         @tile(name='protected_login', permission='login')
         class ProtectedLogin(Tile):
             def render(self):
-                return u'permission login'
+                return 'permission login'
 
         @tile(name='protected_view', permission='view')
         class ProtectedView(Tile):
             def render(self):
-                return u'permission view'
+                return 'permission view'
 
         @tile(name='protected_edit', permission='edit')
         class ProtectedEdit(Tile):
             def render(self):
-                return u'permission edit'
+                return 'permission edit'
 
         @tile(name='protected_delete', permission='delete')
         class ProtectedDelete(Tile):
             def render(self):
-                return u'permission delete'
+                return 'permission delete'
 
         model = Model()
         request = self.layer.new_request()
@@ -603,7 +602,7 @@ class TestTile(TileTestCase):
         # Login permission protected tile can be rendered
         self.assertEqual(
             render_tile(model, request, 'protected_login'),
-            u'permission login'
+            'permission login'
         )
 
         # View permission protected tile rendering fails for anonymous
@@ -626,7 +625,7 @@ class TestTile(TileTestCase):
         # permission
         self.assertEqual(
             render_tile(model, request, 'protected_view'),
-            u'permission view'
+            'permission view'
         )
 
         # Edit permission protected tile rendering fails for authenticated
@@ -645,7 +644,7 @@ class TestTile(TileTestCase):
         # Editor is allowed to render edit permission protected tiles
         self.assertEqual(
             render_tile(model, request, 'protected_edit'),
-            u'permission edit'
+            'permission edit'
         )
 
         # Delete permission protected tile rendering fails for editor
@@ -665,30 +664,30 @@ class TestTile(TileTestCase):
         # and others
         self.assertEqual(
             render_tile(model, request, 'protected_delete'),
-            u'permission delete'
+            'permission delete'
         )
         self.assertEqual(
             render_tile(model, request, 'protected_edit'),
-            u'permission edit'
+            'permission edit'
         )
         self.assertEqual(
             render_tile(model, request, 'protected_view'),
-            u'permission view'
+            'permission view'
         )
         self.assertEqual(
             render_tile(model, request, 'protected_login'),
-            u'permission login'
+            'permission login'
         )
 
         # Override secured tile
         @tile(name='protected_delete', permission='delete')
         class ProtectedDeleteOverride(Tile):
             def render(self):
-                return u'permission delete override'
+                return 'permission delete override'
 
         self.assertEqual(
             render_tile(model, request, 'protected_delete'),
-            u'permission delete override'
+            'permission delete override'
         )
 
         # If tile is registered non-strict, render_tile returns empty string
@@ -700,7 +699,7 @@ class TestTile(TileTestCase):
 
         self.layer.logger.clear()
 
-        self.assertEqual(render_tile(model, request, 'protected_unstrict'), u'')
+        self.assertEqual(render_tile(model, request, 'protected_unstrict'), '')
 
         self.checkOutput("""
         Unauthorized: tile <cone.tile.tests...ProtectedUnstrict object at ...>
@@ -713,7 +712,7 @@ class TestTile(TileTestCase):
         @tile(name='raisingtile', permission='login')
         class RaisingTile(Tile):
             def render(self):
-                raise Exception(u'Tile is not willing to perform')
+                raise Exception('Tile is not willing to perform')
 
         err = self.expectError(
             Exception,
@@ -724,36 +723,29 @@ class TestTile(TileTestCase):
         )
         self.assertEqual(str(err), 'Tile is not willing to perform')
 
-    # def test_traceback_supplement(self):
-    #     self.layer.logger.clear()
+    def test_render_template_logs_error(self):
+        model = Model()
+        request = self.layer.new_request()
+        self.layer.logger.clear()
 
-    #     class TBSupplementMock(object):
-    #         def getInfo(self, as_html=0):
-    #             return '    - Mock Supplement Info'
+        def bugcall():
+            raise Exception('MockException')
 
-    #     class BugMock(object):
-    #         def __call__(self):
-    #             __traceback_supplement__ = (TBSupplementMock,)
-    #             raise Exception('MockException')
+        err = self.expectError(
+            Exception,
+            render_template,
+            'cone.tile:testdata/tile_exc_bug.pt',
+            model=model,
+            request=request,
+            bugcall=bugcall
+        )
+        self.assertEqual(str(err), 'MockException')
+        self.checkOutput("""
+        Error while rendering tile template.
+        Traceback (most recent call last):
+        ...
+        Exception: MockException
+        ...
+        """, self.layer.logger.messages[0])
 
-    #     try:
-    #         model = Model()
-    #         request = self.layer.new_request()
-    #         render_template(
-    #             'cone.tile:testdata/tile_exc_bug.pt',
-    #             model=model,
-    #             request=request,
-    #             bugcall=BugMock()
-    #         )
-    #     except Exception:
-    #         pass
-
-    #     self.checkOutput("""
-    #     Error while rendering tile template.
-    #     Traceback (most recent call last):
-    #       File "..._api.py", line ..., in render_template
-    #         ...
-    #         raise Exception('MockException')
-    #         - Mock Supplement Info
-    #     Exception: MockException
-    #     """, self.layer.logger.messages[0])
+        self.layer.logger.clear()

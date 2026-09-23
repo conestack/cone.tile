@@ -1,12 +1,12 @@
-from cone.tile._api import ITile
+from cone.tile._api import ITile  # noqa
 from cone.tile._api import register_tile
-from cone.tile._api import render_template
-from cone.tile._api import render_template_to_response
-from cone.tile._api import render_tile
-from cone.tile._api import render_to_response
-from cone.tile._api import Tile
-from cone.tile._api import tile
-from cone.tile._api import TileRenderer
+from cone.tile._api import render_template  # noqa
+from cone.tile._api import render_template_to_response  # noqa
+from cone.tile._api import render_tile  # noqa
+from cone.tile._api import render_to_response  # noqa
+from cone.tile._api import Tile  # noqa
+from cone.tile._api import tile  # noqa
+from cone.tile._api import TileRenderer  # noqa
 from zope.deprecation import deprecated
 
 

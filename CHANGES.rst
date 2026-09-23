@@ -4,7 +4,18 @@ Changes
 2.0.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Drop the Python 2 remnants: ``IS_PY2`` in ``cone.tile._api`` and the
+  ``urllib``/``cgi`` import fallbacks.
+  [rnix]
+
+- Modernise the code ruff flags as outdated: ``u''`` prefixes, ``class
+  X(object)``, ``.format()`` over f-strings. Behaviour unchanged.
+  ``super(Class, self)`` is kept, see ``cone.app``.
+  [rnix]
+
+- Add ``qa.ruff`` domain to Makefile and pin the ruff rule selection in
+  ``pyproject.toml``, ``make check`` runs ``ruff check``.
+  [rnix]
 
 
 2.0.0 (2026-02-03)
