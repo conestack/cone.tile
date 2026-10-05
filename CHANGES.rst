@@ -4,6 +4,13 @@ Changes
 2.0.1 (unreleased)
 ------------------
 
+- Render a copy of the registered tile on every call. One tile object is
+  registered per name, and ``Tile.__call__`` sets ``model`` and ``request``
+  on it: two threads rendering the same tile at once shared that object, and
+  a template could read the model and request of the other request.
+  ``register_tile`` now registers a wrapper that renders a shallow copy.
+  [rnix]
+
 - Drop the Python 2 remnants: ``IS_PY2`` in ``cone.tile._api`` and the
   ``urllib``/``cgi`` import fallbacks.
   [rnix]

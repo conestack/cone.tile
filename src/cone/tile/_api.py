@@ -19,6 +19,7 @@ from zope.component import ComponentLookupError
 from zope.interface import Attribute
 from zope.interface import Interface
 from zope.interface import implementer
+import copy
 import html
 import os
 import sys
@@ -281,6 +282,29 @@ class Tile:
         return '/'.join([self.request.application_url] + rp)
 
 
+class _RenderCopy:
+    """Renders a copy of the registered tile on every call.
+
+    One tile object is registered per tile name. ``Tile.__call__`` sets
+    ``model`` and ``request`` on the object it is called on, and ``prepare``
+    or a subclass may set more. Called as it is, two requests rendering the
+    same tile at once - a threaded server - share that object, and a template
+    of one request reads the model and request of the other. A shallow copy
+    per call keeps what was set at registration (``path``, ``attribute``,
+    ``name``) and gives each render an object of its own.
+    """
+
+    def __init__(self, tile):
+        self.tile = tile
+
+    def __call__(self, context, request):
+        return copy.copy(self.tile)(context, request)
+
+    def __repr__(self):
+        # Messages name the tile, not this wrapper.
+        return repr(self.tile)
+
+
 def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
     """wraps tile and does security checks.
     """
@@ -362,6 +386,9 @@ def register_tile(name=None, path=None, attribute=None, interface=Interface,
     if path and not (':' in path or os.path.isabs(path)):
         path = f'{caller_package(_level).__name__}:{path}'
     tile = class_(path=path, attribute=attribute, name=name)
+    rendered = _RenderCopy(tile)
+    preserve_view_attrs(tile, rendered)
+    tile = rendered
     registry = get_current_registry()
     registered = registry.adapters.registered
     unregister = registry.adapters.unregister

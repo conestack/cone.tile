@@ -1,3 +1,4 @@
+from cone.tile import ITile
 from cone.tile import register_tile
 from cone.tile import render_template
 from cone.tile import render_template_to_response
@@ -13,6 +14,7 @@ from pyramid.httpexceptions import HTTPForbidden
 from pyramid.interfaces import IAuthenticationPolicy
 from pyramid.interfaces import IAuthorizationPolicy
 from pyramid.interfaces import IDebugLogger
+from pyramid.interfaces import IRequest
 from pyramid.security import ALL_PERMISSIONS
 from pyramid.security import ACLDenied
 from pyramid.security import Allow
@@ -22,7 +24,9 @@ from pyramid.security import view_execution_permitted
 from webob.exc import HTTPFound
 from webob.response import Response
 from zope.component import ComponentLookupError
+from zope.interface import Interface
 import doctest
+import threading
 import unittest
 import venusian
 
@@ -228,6 +232,57 @@ class TestTile(TileTestCase):
             render_tile(model, request, 'tileone'),
             '<span>Tile One</span>'
         )
+
+    def test_concurrent_renders_do_not_share_a_tile(self):
+        # One tile object is registered per tile. Rendered as it is, two
+        # threads rendering it at once set ``model`` and ``request`` on the
+        # same object, and one of them reads what the other has set. Each
+        # render works on a copy of its own.
+        barrier = threading.Barrier(2, timeout=5)
+
+        class WaitingTile(Tile):
+            def render(self):
+                # Both renders have set their model when they read it.
+                barrier.wait()
+                return self.model.title
+
+        register_tile(name='waiting', class_=WaitingTile, permission=None)
+        requests = {name: self.layer.new_request() for name in ('a', 'b')}
+        results = {}
+
+        def render(name):
+            model = Model()
+            model.title = name
+            results[name] = render_tile(model, requests[name], 'waiting')
+
+        threads = [threading.Thread(target=render, args=(name,)) for name in 'ab']
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertEqual(results, {'a': 'a', 'b': 'b'})
+
+    def test_a_render_leaves_the_registered_tile_untouched(self):
+        # What a render sets - ``model``, ``request``, whatever ``prepare``
+        # computes - belongs to that render and is gone afterwards.
+        class PreparingTile(Tile):
+            def prepare(self):
+                self.prepared = self.model.title
+
+            def render(self):
+                return self.prepared
+
+        register_tile(name='preparing', class_=PreparingTile, permission=None)
+        request = self.layer.new_request()
+        for title in ('one', 'two'):
+            model = Model()
+            model.title = title
+            self.assertEqual(render_tile(model, request, 'preparing'), title)
+        registered = request.registry.adapters.lookup(
+            (Interface, IRequest), ITile, name='preparing'
+        )
+        self.assertFalse(hasattr(registered, 'prepared'))
+        self.assertFalse(hasattr(registered, 'model'))
 
     def test_override_tile(self):
         model = Model()
