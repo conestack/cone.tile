@@ -12,6 +12,9 @@ from zope.deprecation import deprecated
 
 # B/C
 registerTile = register_tile
-deprecated('registerTile', """
+deprecated(
+    'registerTile',
+    """
 ``cone.tile.registerTile`` is deprecated as of cone.tile 1.0 and will be
-removed in cone.tile 1.1. Use ``cone.tile.register_tile`` instead.""")
+removed in cone.tile 1.1. Use ``cone.tile.register_tile`` instead.""",
+)
