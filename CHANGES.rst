@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.0.1 (unreleased)
+2.0.1 (2026-10-24)
 ------------------
 
 - Render a copy of the registered tile on every call. One tile object is
