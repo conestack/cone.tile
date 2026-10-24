@@ -8,18 +8,17 @@ from cone.tile import Tile
 from cone.tile import tile
 from cone.tile import TileRenderer
 from pyramid import testing
-from pyramid.authentication import CallbackAuthenticationPolicy
-from pyramid.authorization import ACLAuthorizationPolicy
+from pyramid.authorization import ACLDenied
+from pyramid.authorization import ACLHelper
+from pyramid.authorization import ALL_PERMISSIONS
+from pyramid.authorization import Allow
+from pyramid.authorization import Authenticated
+from pyramid.authorization import Deny
+from pyramid.authorization import Everyone
 from pyramid.httpexceptions import HTTPForbidden
-from pyramid.interfaces import IAuthenticationPolicy
-from pyramid.interfaces import IAuthorizationPolicy
 from pyramid.interfaces import IDebugLogger
 from pyramid.interfaces import IRequest
-from pyramid.security import ACLDenied
-from pyramid.security import ALL_PERMISSIONS
-from pyramid.security import Allow
-from pyramid.security import Deny
-from pyramid.security import Everyone
+from pyramid.interfaces import ISecurityPolicy
 from pyramid.security import view_execution_permitted
 from webob.exc import HTTPFound
 from webob.response import Response
@@ -148,31 +147,32 @@ class TestTileTestCase(TileTestCase):
             self.assertTrue(isinstance(err, Failure))
 
 
+class DummySecurityPolicy:
+    """Security policy with a settable ``userid`` and ACL authorization."""
+
+    userid = None
+    roles = {
+        'admin_user': ['role:manager'],
+        'editor_user': ['role:editor'],
+    }
+
+    def permits(self, request, context, permission):
+        principals = [Everyone]
+        if self.userid:
+            principals += [Authenticated, self.userid]
+            principals += self.roles.get(self.userid, [])
+        return ACLHelper().permits(context, principals, permission)
+
+
 def secured(func):
     def wrapped(self):
         registry = self.layer.registry
-
-        # Authentication policy
-        def groups_callback(name, request):
-            if name == 'admin_user':
-                return ['role:manager']
-            if name == 'editor_user':
-                return ['role:editor']
-            return []
-
-        authn = CallbackAuthenticationPolicy()
-        authn.callback = groups_callback
-        registry.registerUtility(authn, IAuthenticationPolicy)
-
-        # Authorization policy
-        authz = ACLAuthorizationPolicy()
-        registry.registerUtility(authz, IAuthorizationPolicy)
-
+        policy = DummySecurityPolicy()
+        registry.registerUtility(policy, ISecurityPolicy)
         try:
-            func(self, authn)
+            func(self, policy)
         finally:
-            registry.unregisterUtility(authn, IAuthenticationPolicy)
-            registry.unregisterUtility(authz, IAuthorizationPolicy)
+            registry.unregisterUtility(policy, ISecurityPolicy)
 
     return wrapped
 
@@ -210,8 +210,8 @@ class TestTile(TileTestCase):
         request = self.layer.new_request()
 
         # Register a tile. When no object is given, the default Tile is
-        # instanciated.
-        register_tile(name='tileone', path='../testdata/tile1.pt')
+        # instanciated. A relative path is relative to the calling package.
+        register_tile(name='tileone', path='tile_relative.pt')
 
         # Render registered tile - first how it works in templates
         tilerenderer = TileRenderer(model, request)
@@ -276,7 +276,7 @@ class TestTile(TileTestCase):
         request = self.layer.new_request()
 
         # Override tile
-        register_tile(name='tileone', path='../testdata/tile1_override.pt')
+        register_tile(name='tileone', path='cone.tile:testdata/tile1_override.pt')
         self.assertEqual(
             render_tile(model, request, 'tileone'), '<span>Tile One Override</span>'
         )
@@ -284,7 +284,7 @@ class TestTile(TileTestCase):
         # Reset overwritten tile
         self.layer.logger.clear()
 
-        register_tile(name='tileone', path='../testdata/tile1.pt')
+        register_tile(name='tileone', path='cone.tile:testdata/tile1.pt')
 
         self.checkOutput(
             """
@@ -342,7 +342,7 @@ class TestTile(TileTestCase):
         model = Model()
         request = self.layer.new_request()
 
-        @tile(name='tiletwo', path='../testdata/tile2.pt')
+        @tile(name='tiletwo', path='cone.tile:testdata/tile2.pt')
         class TileTwo(Tile):
             data = 'custom'
 
@@ -445,7 +445,7 @@ class TestTile(TileTestCase):
         self.assertTrue(isinstance(http_found, HTTPFound))
         del request.environ['redirect']
 
-        register_tile(name='redirecttiletwo', path='../testdata/tile3.pt')
+        register_tile(name='redirecttiletwo', path='cone.tile:testdata/tile3.pt')
         self.assertEqual(render_tile(model, request, 'redirecttiletwo'), '')
         self.assertEqual(request.environ['redirect'], 'http://example.com/foo')
         del request.environ['redirect']
@@ -501,11 +501,13 @@ class TestTile(TileTestCase):
         err = self.expectError(
             ValueError,
             render_template_to_response,
-            '../testdata/foo.pt',
+            'cone.tile:testdata/foo.pt',
             model=model,
             request=request,
         )
-        self.assertTrue(str(err).startswith('Missing template asset: ../testdata/foo.pt'))
+        self.assertTrue(
+            str(err).startswith('Missing template asset: cone.tile:testdata/foo.pt')
+        )
 
         response = render_template_to_response(
             'cone.tile:testdata/tile1.pt', model=model, request=request
@@ -543,7 +545,7 @@ class TestTile(TileTestCase):
         model = Model()
         request = self.layer.new_request()
 
-        register_tile(name='urltile', path='../testdata/tile4.pt')
+        register_tile(name='urltile', path='cone.tile:testdata/tile4.pt')
         self.assertEqual(
             render_tile(model, request, 'urltile'), '<span>http://example.com</span>\n'
         )
@@ -561,7 +563,7 @@ class TestTile(TileTestCase):
         )
 
     @secured
-    def test_secured(self, authn):
+    def test_secured(self, policy):
         @tile(name='protected_login', permission='login')
         class ProtectedLogin(Tile):
             def render(self):
@@ -595,7 +597,7 @@ class TestTile(TileTestCase):
         ]
 
         # No authenticated user
-        authn.unauthenticated_userid = lambda *args: None
+        policy.userid = None
 
         # Login permission protected tile can be rendered
         self.assertEqual(
@@ -612,7 +614,7 @@ class TestTile(TileTestCase):
         self.assertTrue(isinstance(rule, ACLDenied))
 
         # Set authenticated to 'max'
-        authn.unauthenticated_userid = lambda *args: 'max'
+        policy.userid = 'max'
 
         # Authenticated users are allowed to view tiles protected by view
         # permission
@@ -625,7 +627,7 @@ class TestTile(TileTestCase):
         self.assertTrue(str(err).find('failed permission check') > -1)
 
         # Set authenticated to 'editor_user'
-        authn.unauthenticated_userid = lambda *args: 'editor_user'
+        policy.userid = 'editor_user'
 
         # Editor is allowed to render edit permission protected tiles
         self.assertEqual(render_tile(model, request, 'protected_edit'), 'permission edit')
@@ -637,7 +639,7 @@ class TestTile(TileTestCase):
         self.assertTrue(str(err).find('failed permission check') > -1)
 
         # Set User to 'admin_user'
-        authn.unauthenticated_userid = lambda *args: 'admin_user'
+        policy.userid = 'admin_user'
 
         # Admin users are allowed to render delete permission protected tiles
         # and others
@@ -665,7 +667,7 @@ class TestTile(TileTestCase):
         class ProtectedUnstrict(Tile):
             pass
 
-        authn.unauthenticated_userid = lambda *args: None
+        policy.userid = None
 
         self.layer.logger.clear()
 

@@ -1,7 +1,5 @@
 from pyramid.config.views import preserve_view_attrs
 from pyramid.httpexceptions import HTTPForbidden
-from pyramid.interfaces import IAuthenticationPolicy
-from pyramid.interfaces import IAuthorizationPolicy
 from pyramid.interfaces import IDebugLogger
 from pyramid.interfaces import IRequest
 from pyramid.interfaces import IResponseFactory
@@ -285,38 +283,35 @@ class _RenderCopy:
         return repr(self.tile)
 
 
-def _secure_tile(tile, permission, authn_policy, authz_policy, strict):
-    """wraps tile and does security checks."""
-    wrapped_tile = tile
-    if authn_policy and authz_policy and (permission is not None):
+def _secure_tile(tile, permission, strict):
+    """Wrap tile and check ``permission`` with the security policy of the
+    request before rendering."""
 
-        def _permitted(context, request):
-            principals = authn_policy.effective_principals(request)
-            return authz_policy.permits(context, principals, permission)
+    def _permitted(context, request):
+        return request.has_permission(permission, context)
 
-        def _secured_tile(context, request):
-            result = _permitted(context, request)
-            if result:
-                return tile(context, request)
-            msg = getattr(
-                request,
-                'authdebug_message',
-                f'Unauthorized: tile {tile} failed permission check',
-            )
-            if strict:
-                raise HTTPForbidden(msg, result=result)
-            settings = request.registry.settings
-            if settings.get('debug_authorization', False):
-                logger = request.registry.getUtility(IDebugLogger)
-                logger.debug(msg)
-            return ''
+    def _secured_tile(context, request):
+        result = _permitted(context, request)
+        if result:
+            return tile(context, request)
+        msg = getattr(
+            request,
+            'authdebug_message',
+            f'Unauthorized: tile {tile} failed permission check',
+        )
+        if strict:
+            raise HTTPForbidden(msg, result=result)
+        settings = request.registry.settings
+        if settings.get('debug_authorization', False):
+            logger = request.registry.getUtility(IDebugLogger)
+            logger.debug(msg)
+        return ''
 
-        _secured_tile.__call_permissive__ = tile
-        _secured_tile.__permitted__ = _permitted
-        _secured_tile.__permission__ = permission
-        wrapped_tile = _secured_tile
-    preserve_view_attrs(tile, wrapped_tile)
-    return wrapped_tile
+    _secured_tile.__call_permissive__ = tile
+    _secured_tile.__permitted__ = _permitted
+    _secured_tile.__permission__ = permission
+    preserve_view_attrs(tile, _secured_tile)
+    return _secured_tile
 
 
 # Registration
@@ -383,9 +378,7 @@ def register_tile(
     unregister = registry.adapters.unregister
     logger = registry.getUtility(IDebugLogger)
     if permission is not None:
-        authn_policy = registry.queryUtility(IAuthenticationPolicy)
-        authz_policy = registry.queryUtility(IAuthorizationPolicy)
-        tile = _secure_tile(tile, permission, authn_policy, authz_policy, strict)
+        tile = _secure_tile(tile, permission, strict)
         exists = registered(
             (IViewClassifier, IRequest, interface), ISecuredView, name=name
         )

@@ -1,8 +1,14 @@
 Changes
 =======
 
-2.0.2 (unreleased)
+2.1.0 (unreleased)
 ------------------
+
+- Check tile permissions with ``request.has_permission`` when rendering
+  instead of looking up the authentication and authorization policies when
+  registering. Tiles are protected with a Pyramid security policy now, and
+  regardless of whether a policy was configured before the tile was registered.
+  [rnix]
 
 - Sort the imports with ruff (one per line, ``from`` imports first, no
   sections) and format the code with ``ruff format`` (90 characters per line,
