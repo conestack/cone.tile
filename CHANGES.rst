@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.1.0 (unreleased)
+2.1.0 (2026-10-31)
 ------------------
 
 - Check tile permissions with ``request.has_permission`` when rendering
