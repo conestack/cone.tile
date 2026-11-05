@@ -4,7 +4,11 @@ Changes
 2.1.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- A tile with a permission is no longer registered as view under its name. A
+  request to this name rendered the tile and failed afterwards, since a tile
+  returns no response. Tiles are rendered with ``render_tile``, usually through
+  ``ajaxaction`` of ``cone.app``.
+  [rnix]
 
 
 2.1.0 (2026-10-31)

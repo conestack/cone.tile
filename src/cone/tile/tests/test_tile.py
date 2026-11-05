@@ -8,7 +8,6 @@ from cone.tile import Tile
 from cone.tile import tile
 from cone.tile import TileRenderer
 from pyramid import testing
-from pyramid.authorization import ACLDenied
 from pyramid.authorization import ACLHelper
 from pyramid.authorization import ALL_PERMISSIONS
 from pyramid.authorization import Allow
@@ -288,18 +287,10 @@ class TestTile(TileTestCase):
 
         self.checkOutput(
             """
-        Unregister secured view for 'zope.interface.Interface'
-        with name 'tileone'
-        """,
-            self.layer.logger.messages[0],
-        )
-
-        self.checkOutput(
-            """
         Unregister tile for 'zope.interface.Interface'
         with name 'tileone'
         """,
-            self.layer.logger.messages[1],
+            self.layer.logger.messages[0],
         )
 
         self.layer.logger.clear()
@@ -563,6 +554,15 @@ class TestTile(TileTestCase):
         )
 
     @secured
+    def test_tile_is_no_view(self, policy):
+        @tile(name='no_view', permission='login')
+        class NoView(Tile):
+            pass
+
+        with self.assertRaises(TypeError):
+            view_execution_permitted(Model(), self.layer.new_request(), name='no_view')
+
+    @secured
     def test_secured(self, policy):
         @tile(name='protected_login', permission='login')
         class ProtectedLogin(Tile):
@@ -609,9 +609,6 @@ class TestTile(TileTestCase):
             HTTPForbidden, render_tile, model, request, 'protected_view'
         )
         self.assertTrue(str(err).find('failed permission check') > -1)
-
-        rule = view_execution_permitted(model, request, name='protected_view')
-        self.assertTrue(isinstance(rule, ACLDenied))
 
         # Set authenticated to 'max'
         policy.userid = 'max'

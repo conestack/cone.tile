@@ -3,8 +3,6 @@ from pyramid.httpexceptions import HTTPForbidden
 from pyramid.interfaces import IDebugLogger
 from pyramid.interfaces import IRequest
 from pyramid.interfaces import IResponseFactory
-from pyramid.interfaces import ISecuredView
-from pyramid.interfaces import IViewClassifier
 from pyramid.path import caller_package
 from pyramid.renderers import RendererHelper
 from pyramid.threadlocal import get_current_registry
@@ -287,11 +285,8 @@ def _secure_tile(tile, permission, strict):
     """Wrap tile and check ``permission`` with the security policy of the
     request before rendering."""
 
-    def _permitted(context, request):
-        return request.has_permission(permission, context)
-
     def _secured_tile(context, request):
-        result = _permitted(context, request)
+        result = request.has_permission(permission, context)
         if result:
             return tile(context, request)
         msg = getattr(
@@ -307,9 +302,6 @@ def _secure_tile(tile, permission, strict):
             logger.debug(msg)
         return ''
 
-    _secured_tile.__call_permissive__ = tile
-    _secured_tile.__permitted__ = _permitted
-    _secured_tile.__permission__ = permission
     preserve_view_attrs(tile, _secured_tile)
     return _secured_tile
 
@@ -379,16 +371,6 @@ def register_tile(
     logger = registry.getUtility(IDebugLogger)
     if permission is not None:
         tile = _secure_tile(tile, permission, strict)
-        exists = registered(
-            (IViewClassifier, IRequest, interface), ISecuredView, name=name
-        )
-        if exists:
-            msg = f"Unregister secured view for '{interface}' with name '{name}'"
-            logger.debug(msg)
-            unregister((IViewClassifier, IRequest, interface), ISecuredView, name=name)
-        registry.registerAdapter(
-            tile, (IViewClassifier, IRequest, interface), ISecuredView, name
-        )
     exists = registered((interface, IRequest), ITile, name=name)
     if exists:
         msg = f"Unregister tile for '{interface}' with name '{name}'"
