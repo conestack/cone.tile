@@ -1,7 +1,7 @@
 Changes
 =======
 
-2.2.0 (unreleased)
+2.2.0 (2026-11-09)
 ------------------
 
 - A tile with a permission is no longer registered as view under its name. A
